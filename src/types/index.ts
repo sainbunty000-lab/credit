@@ -172,10 +172,58 @@ export interface Case {
   data: any;
 }
 
+export interface GstInput {
+  gstin: string;
+  total_taxable_turnover: number;
+  igst_collected: number;
+  cgst_collected: number;
+  sgst_collected: number;
+  total_itc_available: number;
+  total_itc_utilized: number;
+  interest_paid: number;
+}
+
+export interface ItrInput {
+  taxable_income: number;
+  total_deductions: number;
+  net_tax_liability: number;
+  tax_due: number;
+  tds_deducted: number;
+  advance_tax_paid: number;
+}
+
+export interface GstItrInput {
+  company_name: string;
+  gst: GstInput;
+  itr: ItrInput;
+}
+
+export interface GstItrResult {
+  id: string;
+  company_name: string;
+  timestamp: string;
+  input_data: {
+    gst: GstInput;
+    itr: ItrInput;
+  };
+  total_gst_collected: number;
+  itc_utilization_rate: number;
+  gst_turnover_monthly: number;
+  effective_tax_rate: number;
+  tax_compliance_score: number;
+  assessment: string[];
+  strengths: string[];
+  concerns: string[];
+  recommendation: string;
+  eligible: boolean;
+  analysis_type: string;
+}
+
 export interface DashboardStats {
   total_cases: number;
   wc_analysis_count: number;
   banking_count: number;
   multi_year_count: number;
+  gst_itr_count?: number;
   recent_cases: Case[];
 }

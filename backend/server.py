@@ -188,6 +188,46 @@ class FlexibleFinancialInput(BaseModel):
     financial_data: Dict[str, Any]
     year: Optional[str] = None
 
+class GstInput(BaseModel):
+    gstin: str = ""
+    total_taxable_turnover: float = 0
+    igst_collected: float = 0
+    cgst_collected: float = 0
+    sgst_collected: float = 0
+    total_itc_available: float = 0
+    total_itc_utilized: float = 0
+    interest_paid: float = 0
+
+class ItrInput(BaseModel):
+    taxable_income: float = 0
+    total_deductions: float = 0
+    net_tax_liability: float = 0
+    tax_due: float = 0
+    tds_deducted: float = 0
+    advance_tax_paid: float = 0
+
+class GstItrInput(BaseModel):
+    company_name: str = "Company"
+    gst: GstInput
+    itr: ItrInput
+
+class GstItrResult(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_name: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    input_data: Dict[str, Any]
+    total_gst_collected: float
+    itc_utilization_rate: float
+    gst_turnover_monthly: float
+    effective_tax_rate: float
+    tax_compliance_score: int
+    assessment: List[str]
+    strengths: List[str]
+    concerns: List[str]
+    recommendation: str
+    eligible: bool
+    analysis_type: str = "gst_itr"
+
 class FinancialAnalysisResult(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     company_name: str
@@ -303,6 +343,153 @@ def calculate_working_capital(data: WorkingCapitalInput) -> WorkingCapitalResult
         assessment=assessment,
         recommendation=recommendation
     )
+
+def calculate_gst_itr(data: GstItrInput) -> GstItrResult:
+    gst = data.gst
+    itr = data.itr
+
+    # GST metrics
+    total_gst_collected = gst.igst_collected + gst.cgst_collected + gst.sgst_collected
+    itc_utilization_rate = (
+        gst.total_itc_utilized / gst.total_itc_available * 100
+        if gst.total_itc_available > 0 else 0
+    )
+    gst_turnover_monthly = gst.total_taxable_turnover / 12 if gst.total_taxable_turnover > 0 else 0
+
+    # ITR metrics
+    effective_tax_rate = (
+        itr.net_tax_liability / itr.taxable_income * 100
+        if itr.taxable_income > 0 else 0
+    )
+
+    # Turnover-to-income consistency
+    max_val = max(gst.total_taxable_turnover, itr.taxable_income)
+    gst_vs_itr_gap = (
+        abs(gst.total_taxable_turnover - itr.taxable_income) / max_val * 100
+        if max_val > 0 else 0
+    )
+
+    # Compliance scoring (100 points total)
+    score = 0
+
+    # ITC utilization (25 pts)
+    if itc_utilization_rate >= 90:
+        score += 25
+    elif itc_utilization_rate >= 75:
+        score += 18
+    elif itc_utilization_rate >= 50:
+        score += 10
+    elif gst.total_itc_available == 0:
+        score += 15  # N/A — not penalised
+
+    # Tax payment status (25 pts)
+    if itr.tax_due == 0 and itr.net_tax_liability > 0:
+        score += 25
+    elif itr.tax_due == 0:
+        score += 20
+    elif itr.net_tax_liability > 0 and itr.tax_due <= itr.net_tax_liability * 0.10:
+        score += 18
+    elif itr.net_tax_liability > 0 and itr.tax_due <= itr.net_tax_liability * 0.25:
+        score += 10
+
+    # Interest paid (15 pts) — lower is better
+    if gst.interest_paid == 0:
+        score += 15
+    elif total_gst_collected > 0 and gst.interest_paid < total_gst_collected * 0.02:
+        score += 10
+    elif total_gst_collected > 0 and gst.interest_paid < total_gst_collected * 0.05:
+        score += 5
+
+    # Turnover-income consistency (20 pts)
+    if gst_vs_itr_gap < 5:
+        score += 20
+    elif gst_vs_itr_gap < 10:
+        score += 15
+    elif gst_vs_itr_gap < 20:
+        score += 8
+
+    # Effective tax rate reasonableness (15 pts)
+    if 15 <= effective_tax_rate <= 35:
+        score += 15
+    elif 10 <= effective_tax_rate <= 40:
+        score += 10
+    elif effective_tax_rate > 0:
+        score += 5
+
+    tax_compliance_score = min(100, score)
+
+    # Assessment, strengths, concerns
+    assessment: List[str] = []
+    strengths: List[str] = []
+    concerns: List[str] = []
+
+    if gst.total_itc_available > 0:
+        if itc_utilization_rate >= 80:
+            assessment.append(f"ITC Utilization {itc_utilization_rate:.1f}% — efficient ITC management")
+            strengths.append("High ITC utilization indicates efficient GST compliance")
+        elif itc_utilization_rate >= 50:
+            assessment.append(f"ITC Utilization {itc_utilization_rate:.1f}% — moderate efficiency")
+        else:
+            assessment.append(f"ITC Utilization {itc_utilization_rate:.1f}% — low utilization, review ITC claims")
+            concerns.append("Low ITC utilization may indicate compliance gaps")
+
+    if itr.tax_due == 0:
+        strengths.append("Tax liability fully settled — no outstanding dues")
+        assessment.append("Tax liability fully settled")
+    elif itr.tax_due > 0:
+        concerns.append(f"Outstanding tax due of ₹{itr.tax_due:,.0f}")
+        assessment.append(f"Pending tax payment: ₹{itr.tax_due:,.0f}")
+
+    if gst.interest_paid == 0:
+        strengths.append("No GST interest penalties — timely filings")
+    elif gst.interest_paid > 0:
+        concerns.append("GST interest paid — review filing timeliness")
+        assessment.append(f"GST interest paid: ₹{gst.interest_paid:,.0f}")
+
+    if gst.total_taxable_turnover > 0 and itr.taxable_income > 0:
+        if gst_vs_itr_gap < 10:
+            strengths.append("GST turnover and ITR income are consistent")
+            assessment.append("Income reporting is consistent across GST and ITR")
+        else:
+            concerns.append(f"Turnover vs income discrepancy: {gst_vs_itr_gap:.1f}% gap")
+            assessment.append(f"Turnover-income gap detected: {gst_vs_itr_gap:.1f}%")
+
+    if effective_tax_rate > 0:
+        assessment.append(f"Effective tax rate: {effective_tax_rate:.1f}%")
+
+    eligible = tax_compliance_score >= 60 and itr.tax_due == 0
+
+    if eligible:
+        recommendation = (
+            f"Tax compliance score {tax_compliance_score}/100 — Good tax discipline. "
+            "Eligible for credit assessment."
+        )
+    elif tax_compliance_score >= 40:
+        recommendation = (
+            f"Tax compliance score {tax_compliance_score}/100 — Moderate compliance. "
+            "Settle outstanding dues before credit application."
+        )
+    else:
+        recommendation = (
+            f"Tax compliance score {tax_compliance_score}/100 — Needs improvement. "
+            "Address compliance gaps and pending taxes."
+        )
+
+    return GstItrResult(
+        company_name=data.company_name,
+        input_data={"gst": gst.dict(), "itr": itr.dict()},
+        total_gst_collected=round(total_gst_collected, 2),
+        itc_utilization_rate=round(itc_utilization_rate, 2),
+        gst_turnover_monthly=round(gst_turnover_monthly, 2),
+        effective_tax_rate=round(effective_tax_rate, 2),
+        tax_compliance_score=tax_compliance_score,
+        assessment=assessment,
+        strengths=strengths,
+        concerns=concerns,
+        recommendation=recommendation,
+        eligible=eligible,
+    )
+
 
 def calculate_banking_score(data: BankingInput) -> BankingResult:
     if data.average_balance > 0:
@@ -774,6 +961,32 @@ Return ONLY a valid JSON object with these exact keys (use 0 if value not found)
     "overdraft_usage": <number>,
     "ecs_emi_payments": <number>,
     "num_transactions": <number>
+}
+Return only the JSON object, no explanations or markdown."""
+    elif document_type == "gstr":
+        return """Analyze this GSTR-3B (GST Return) document and extract the following financial values.
+Return ONLY a valid JSON object with these exact keys (use 0 if value not found, empty string for GSTIN if not found):
+{
+    "gstin": "<string>",
+    "total_taxable_turnover": <number>,
+    "igst_collected": <number>,
+    "cgst_collected": <number>,
+    "sgst_collected": <number>,
+    "total_itc_available": <number>,
+    "total_itc_utilized": <number>,
+    "interest_paid": <number>
+}
+Return only the JSON object, no explanations or markdown."""
+    elif document_type == "itr":
+        return """Analyze this Income Tax Return (ITR) document and extract the following financial values.
+Return ONLY a valid JSON object with these exact keys (use 0 if value not found):
+{
+    "taxable_income": <number>,
+    "total_deductions": <number>,
+    "net_tax_liability": <number>,
+    "tax_due": <number>,
+    "tds_deducted": <number>,
+    "advance_tax_paid": <number>
 }
 Return only the JSON object, no explanations or markdown."""
     else:
@@ -1315,6 +1528,22 @@ async def analyze_trends(data: MultiYearInput):
         return result
     except Exception as e:
         logger.error(f"Trend Analysis error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# GST & ITR Analysis
+@api_router.post("/analysis/gst-itr", response_model=GstItrResult)
+async def analyze_gst_itr(data: GstItrInput):
+    try:
+        result = calculate_gst_itr(data)
+        if db is not None:
+            try:
+                record = result.dict()
+                await db.gst_itr_analyses.insert_one(record)
+            except Exception as db_err:
+                logger.warning(f"DB storage failed (non-fatal): {db_err}")
+        return result
+    except Exception as e:
+        logger.error(f"GST & ITR analysis error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Flexible Financial Analysis

@@ -104,6 +104,56 @@ FIELD_SYNONYMS: Dict[str, list] = {
         "purchases", "cost_of_purchases", "raw_material_consumed",
         "material cost",
     ],
+    # ── GST / GSTR-3B ────────────────────────────────────────────────
+    "total_taxable_turnover": [
+        "total_taxable_turnover", "taxable_turnover", "gst_turnover",
+        "outward_supplies", "total_outward_supplies", "aggregate_turnover",
+    ],
+    "igst_collected": [
+        "igst_collected", "igst", "integrated_gst", "igst_payable",
+    ],
+    "cgst_collected": [
+        "cgst_collected", "cgst", "central_gst", "cgst_payable",
+    ],
+    "sgst_collected": [
+        "sgst_collected", "sgst", "state_gst", "sgst_payable",
+        "utgst", "utgst_collected",
+    ],
+    "total_itc_available": [
+        "total_itc_available", "itc_available", "input_tax_credit_available",
+        "eligible_itc",
+    ],
+    "total_itc_utilized": [
+        "total_itc_utilized", "itc_utilized", "input_tax_credit_utilized",
+        "itc_set_off",
+    ],
+    "interest_paid": [
+        "interest_paid", "gst_interest", "late_fee", "penalty_paid",
+    ],
+    # ── ITR / Income Tax Return ───────────────────────────────────────
+    "taxable_income": [
+        "taxable_income", "gross_total_income", "total_income",
+        "income_chargeable_to_tax",
+    ],
+    "total_deductions": [
+        "total_deductions", "deductions_under_chapter_vi_a",
+        "chapter_via_deductions", "deductions",
+    ],
+    "net_tax_liability": [
+        "net_tax_liability", "tax_payable", "income_tax_payable",
+        "tax_on_total_income",
+    ],
+    "tax_due": [
+        "tax_due", "self_assessment_tax", "outstanding_tax",
+        "balance_tax_payable",
+    ],
+    "tds_deducted": [
+        "tds_deducted", "tds", "tax_deducted_at_source",
+        "tds_and_tcs_credit",
+    ],
+    "advance_tax_paid": [
+        "advance_tax_paid", "advance_tax", "prepaid_taxes",
+    ],
 }
 
 # Build a reverse lookup: alias → canonical field name.
