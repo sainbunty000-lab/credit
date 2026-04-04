@@ -7,6 +7,8 @@ import {
   BankingResult,
   MultiYearInput,
   MultiYearResult,
+  GstItrInput,
+  GstItrResult,
   Case,
   DashboardStats,
 } from '../types';
@@ -41,6 +43,12 @@ export const analyzeBanking = async (data: BankingInput): Promise<BankingResult>
 // Multi-Year Trend Analysis
 export const analyzeMultiYear = async (data: MultiYearInput): Promise<MultiYearResult> => {
   const response = await api.post('/analysis/trend', data);
+  return response.data;
+};
+
+// GST & ITR Analysis
+export const analyzeGstItr = async (data: GstItrInput): Promise<GstItrResult> => {
+  const response = await api.post('/analysis/gst-itr', data);
   return response.data;
 };
 
@@ -122,6 +130,25 @@ export interface ParsedFinancialData {
   overdraft_usage?: number;
   ecs_emi_payments?: number;
   num_transactions?: number;
+  // GST (GSTR-3B) fields
+  gstin?: string;
+  total_taxable_turnover?: number;
+  taxable_turnover?: number;
+  igst_collected?: number;
+  cgst_collected?: number;
+  sgst_collected?: number;
+  total_itc_available?: number;
+  itc_available?: number;
+  total_itc_utilized?: number;
+  itc_utilized?: number;
+  interest_paid?: number;
+  // ITR fields
+  taxable_income?: number;
+  total_deductions?: number;
+  net_tax_liability?: number;
+  tax_due?: number;
+  tds_deducted?: number;
+  advance_tax_paid?: number;
 }
 
 export interface ParseDocumentResponse {

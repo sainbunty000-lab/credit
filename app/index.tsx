@@ -51,6 +51,15 @@ const modules = [
     description: 'Historical trend analysis',
   },
   {
+    id: 'gst',
+    title: 'GST & ITR',
+    subtitle: 'TAX',
+    icon: 'shield-checkmark-outline' as const,
+    color: colors.purple,
+    route: '/gst',
+    description: 'Tax compliance & ITR check',
+  },
+  {
     id: 'cases',
     title: 'Saved Cases',
     subtitle: 'RECORDS',

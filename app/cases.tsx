@@ -66,6 +66,8 @@ export default function CasesScreen() {
         return 'business-outline';
       case 'multi_year':
         return 'trending-up-outline';
+      case 'gst_itr':
+        return 'shield-checkmark-outline';
       default:
         return 'document-outline';
     }
@@ -79,6 +81,8 @@ export default function CasesScreen() {
         return colors.green;
       case 'multi_year':
         return colors.purple;
+      case 'gst_itr':
+        return colors.cyan;
       default:
         return colors.primary;
     }
@@ -92,6 +96,8 @@ export default function CasesScreen() {
         return 'Banking';
       case 'multi_year':
         return 'Multi-Year';
+      case 'gst_itr':
+        return 'GST & ITR';
       default:
         return type;
     }
@@ -175,6 +181,29 @@ export default function CasesScreen() {
       );
     }
 
+    if (caseItem.analysis_type === 'gst_itr') {
+      return (
+        <View style={styles.detailsContainer}>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Compliance Score</Text>
+            <Text style={styles.detailValue}>{data.tax_compliance_score}/100</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>ITC Utilization</Text>
+            <Text style={styles.detailValue}>{data.itc_utilization_rate?.toFixed(1)}%</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Effective Tax Rate</Text>
+            <Text style={styles.detailValue}>{data.effective_tax_rate?.toFixed(1)}%</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Eligible</Text>
+            <StatusBadge status={data.eligible ? 'Yes' : 'No'} variant={data.eligible ? 'success' : 'error'} />
+          </View>
+        </View>
+      );
+    }
+
     return null;
   };
 
@@ -226,6 +255,13 @@ export default function CasesScreen() {
               {cases.filter((c) => c.analysis_type === 'multi_year').length}
             </Text>
             <Text style={styles.statLabel}>Trend</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="shield-checkmark-outline" size={20} color={colors.cyan} />
+            <Text style={styles.statValue}>
+              {cases.filter((c) => c.analysis_type === 'gst_itr').length}
+            </Text>
+            <Text style={styles.statLabel}>GST & ITR</Text>
           </View>
         </View>
 

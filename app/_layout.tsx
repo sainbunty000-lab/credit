@@ -70,6 +70,15 @@ export default function RootLayout() {
               }}
             />
             <Tabs.Screen
+              name="gst"
+              options={{
+                title: 'GST & ITR',
+                tabBarIcon: ({ color, size }) => (
+                  <Ionicons name="shield-checkmark-outline" size={size} color={color} />
+                ),
+              }}
+            />
+            <Tabs.Screen
               name="cases"
               options={{
                 title: 'Cases',
