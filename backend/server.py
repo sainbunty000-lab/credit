@@ -364,6 +364,9 @@ def calculate_gst_itr(data: GstItrInput) -> GstItrResult:
 
     # Turnover-to-income consistency
     max_val = max(gst.total_taxable_turnover, itr.taxable_income)
+    # Note: GST turnover (gross revenue) vs ITR taxable income (revenue minus deductions)
+    # are different financial concepts. A gap is expected; a very large gap (>20%) may
+    # indicate inconsistent income reporting across filings.
     gst_vs_itr_gap = (
         abs(gst.total_taxable_turnover - itr.taxable_income) / max_val * 100
         if max_val > 0 else 0
