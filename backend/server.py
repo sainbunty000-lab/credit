@@ -888,11 +888,11 @@ async def analyze_document_with_ai(file_path: str, mime_type: str, document_type
         if not api_key:
             logger.warning("No AI API key configured. Set AI_INTEGRATIONS_GEMINI_API_KEY or GEMINI_API_KEY.")
             return {
-            "success": False,
-          "error": "No AI API key configured. Please set AI_INTEGRATIONS_GEMINI_API_KEY in your environment.",
-          "parsed_data": {},
-          "raw_text": response_text
-          }
+                "success": False,
+                "error": "No AI API key configured. Please set GEMINI_API_KEY or AI_INTEGRATIONS_GEMINI_API_KEY in your environment.",
+                "parsed_data": {},
+                "raw_text": response_text,
+            }
 
         prompt = _build_extraction_prompt(document_type)
 
