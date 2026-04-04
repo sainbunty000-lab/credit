@@ -9,7 +9,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "build:web": "expo export:web",
+    "build:web": "expo export -p web",
     "postinstall": "expo install --fix"
   },
   "engines": {
