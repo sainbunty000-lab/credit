@@ -35,11 +35,13 @@ export interface WorkingCapitalResult {
   quick_ratio: number;
   debtor_days: number;
   creditor_days: number;
+  inventory_days: number;
   inventory_turnover: number;
   wc_cycle: number;
   gross_margin: number;
   net_margin: number;
   net_working_capital: number;
+  mpbf: number;
   mpbf_method_1: number;
   mpbf_method_2: number;
   turnover_method: number;
@@ -48,6 +50,7 @@ export interface WorkingCapitalResult {
   score: number;
   assessment: string[];
   recommendation: string;
+  suggestions: string[];
   analysis_type: string;
 }
 

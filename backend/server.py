@@ -82,11 +82,13 @@ class WorkingCapitalResult(BaseModel):
     quick_ratio: float
     debtor_days: float
     creditor_days: float
+    inventory_days: float
     inventory_turnover: float
     wc_cycle: float
     gross_margin: float
     net_margin: float
     net_working_capital: float
+    mpbf: float
     mpbf_method_1: float
     mpbf_method_2: float
     turnover_method: float
@@ -95,6 +97,7 @@ class WorkingCapitalResult(BaseModel):
     score: int
     assessment: List[str]
     recommendation: str
+    suggestions: List[str] = Field(default_factory=list)
     analysis_type: str = "working_capital"
 
 class BankingInput(BaseModel):
@@ -244,70 +247,83 @@ class FinancialAnalysisResult(BaseModel):
 def calculate_working_capital(data: WorkingCapitalInput) -> WorkingCapitalResult:
     bs = data.balance_sheet
     pl = data.profit_loss
-    
+
+    # ── HDFC Strict Mode calculations ──────────────────────────────────────────
     current_ratio = bs.current_assets / bs.current_liabilities if bs.current_liabilities > 0 else 0
     quick_ratio = (bs.current_assets - bs.inventory) / bs.current_liabilities if bs.current_liabilities > 0 else 0
-    
+
     debtor_days = (bs.debtors / pl.revenue * 365) if pl.revenue > 0 else 0
-    creditor_days = (bs.creditors / pl.purchases * 365) if pl.purchases > 0 else 0
-    inventory_days = (bs.inventory / pl.cogs * 365) if pl.cogs > 0 else 0
+
+    # Special condition: if Purchases = 0, creditor_days and inventory_days must be 0
+    if pl.purchases > 0:
+        creditor_days = (bs.creditors / pl.purchases) * 365
+        inventory_days = (bs.inventory / pl.purchases) * 365
+    else:
+        creditor_days = 0
+        inventory_days = 0
+
     inventory_turnover = pl.cogs / bs.inventory if bs.inventory > 0 else 0
-    
+
     wc_cycle = debtor_days + inventory_days - creditor_days
-    
+
     gross_margin = ((pl.revenue - pl.cogs) / pl.revenue * 100) if pl.revenue > 0 else 100
     net_margin = (pl.net_profit / pl.revenue * 100) if pl.revenue > 0 else 0
-    
+
     net_working_capital = bs.current_assets - bs.current_liabilities
-    
+
+    # HDFC MPBF = 0.75 * Working Capital Gap
+    wc_gap = net_working_capital
+    mpbf = 0.75 * wc_gap
+
+    # Legacy method fields kept for backward compatibility
     mpbf_method_1 = max(0, 0.75 * net_working_capital)
     mpbf_method_2 = max(0, 0.75 * bs.current_assets - bs.current_liabilities)
-    
     projected_turnover = data.projected_turnover if data.projected_turnover > 0 else pl.revenue
     turnover_method = 0.20 * projected_turnover
-    
-    wc_limit = max(mpbf_method_1, mpbf_method_2, turnover_method)
-    
+
+    # HDFC Working Capital Limit = 20% * Sales
+    wc_limit = 0.20 * pl.revenue
+
     eligible = current_ratio >= 1.33 and quick_ratio >= 1.0
-    
+
     assessment = []
     if current_ratio < 1.33:
         assessment.append(f"Current Ratio {current_ratio:.2f}x — below 1.33x benchmark")
     else:
         assessment.append(f"Current Ratio {current_ratio:.2f}x — meets benchmark")
-    
+
     if quick_ratio < 1.0:
         assessment.append(f"Quick Ratio {quick_ratio:.2f}x — may face liquidity pressure")
     else:
         assessment.append(f"Quick Ratio {quick_ratio:.2f}x — healthy liquidity")
-    
+
     if net_margin < 5:
         assessment.append(f"Net Margin {net_margin:.1f}% — monitor for improvement")
     else:
         assessment.append(f"Net Margin {net_margin:.1f}% — healthy profitability")
-    
+
     if wc_cycle > 90:
         assessment.append(f"WC Cycle {wc_cycle:.0f} days — extended cycle, optimize receivables")
     else:
         assessment.append(f"WC Cycle {wc_cycle:.0f} days — efficient operations")
-    
+
     score = 0
     if current_ratio >= 1.33: score += 25
     elif current_ratio >= 1.0: score += 15
     elif current_ratio > 0: score += 5
-    
+
     if quick_ratio >= 1.0: score += 25
     elif quick_ratio >= 0.75: score += 15
     elif quick_ratio > 0: score += 5
-    
+
     if net_margin >= 10: score += 25
     elif net_margin >= 5: score += 15
     elif net_margin > 0: score += 10
-    
+
     if wc_cycle <= 60: score += 25
     elif wc_cycle <= 90: score += 15
     else: score += 5
-    
+
     if eligible:
         recommendation = f"Working capital position is healthy. Recommended WC limit of ₹{wc_limit:,.0f} based on financial analysis. Entity qualifies for working capital financing."
     else:
@@ -317,7 +333,27 @@ def calculate_working_capital(data: WorkingCapitalInput) -> WorkingCapitalResult
         if quick_ratio < 1.0:
             issues.append("liquidity concerns")
         recommendation = f"Working capital position is inadequate for loan eligibility at this time. {' and '.join(issues)}. Suggest reapplication after improving current asset position."
-    
+
+    # ── Advisory suggestions (informational only — do not alter calculations) ──
+    suggestions: List[str] = []
+
+    if pl.purchases == 0:
+        suggestions.append(
+            "Creditor days and inventory days may be distorted as purchases are zero; "
+            "consider using operating expenses for analysis."
+        )
+
+    if bs.current_assets > 0 and (bs.debtors + bs.inventory) > bs.current_assets:
+        suggestions.append(
+            "Current assets may be incomplete; ensure all components are included."
+        )
+
+    if current_ratio < 1:
+        suggestions.append("Liquidity appears weak under current inputs.")
+
+    if wc_cycle > 90:
+        suggestions.append("Working capital cycle indicates higher funding requirement.")
+
     return WorkingCapitalResult(
         company_name=data.company_name,
         input_data={
@@ -327,21 +363,24 @@ def calculate_working_capital(data: WorkingCapitalInput) -> WorkingCapitalResult
         },
         current_ratio=round(current_ratio, 2),
         quick_ratio=round(quick_ratio, 2),
-        debtor_days=round(debtor_days, 0),
-        creditor_days=round(creditor_days, 0),
+        debtor_days=round(debtor_days, 1),
+        creditor_days=round(creditor_days, 1),
+        inventory_days=round(inventory_days, 1),
         inventory_turnover=round(inventory_turnover, 2),
-        wc_cycle=round(wc_cycle, 0),
+        wc_cycle=round(wc_cycle, 1),
         gross_margin=round(gross_margin, 1),
         net_margin=round(net_margin, 1),
         net_working_capital=net_working_capital,
+        mpbf=round(mpbf, 2),
         mpbf_method_1=round(mpbf_method_1, 0),
         mpbf_method_2=round(mpbf_method_2, 0),
         turnover_method=round(turnover_method, 0),
         eligible=eligible,
-        wc_limit=round(wc_limit, 0),
+        wc_limit=round(wc_limit, 2),
         score=score,
         assessment=assessment,
-        recommendation=recommendation
+        recommendation=recommendation,
+        suggestions=suggestions,
     )
 
 def calculate_gst_itr(data: GstItrInput) -> GstItrResult:
