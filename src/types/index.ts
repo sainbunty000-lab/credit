@@ -22,6 +22,11 @@ export interface WorkingCapitalInput {
   projected_turnover: number;
 }
 
+export interface RiskIndicator {
+  color: 'green' | 'amber' | 'red';
+  label: string;
+}
+
 export interface WorkingCapitalResult {
   id: string;
   company_name: string;
@@ -51,6 +56,11 @@ export interface WorkingCapitalResult {
   assessment: string[];
   recommendation: string;
   suggestions: string[];
+  risk_indicators?: {
+    current_ratio: RiskIndicator;
+    wc_cycle: RiskIndicator;
+    nwc: RiskIndicator;
+  };
   analysis_type: string;
 }
 
@@ -143,6 +153,9 @@ export interface MultiYearResult {
   };
   patterns?: Record<string, string>;
   ai_analysis?: FinancialAnalysis;
+  growth_score?: number;
+  trend_label?: string;
+  trend_analysis?: Record<string, any>;
 }
 
 export interface FinancialAnalysis {

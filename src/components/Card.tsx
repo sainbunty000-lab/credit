@@ -18,17 +18,17 @@ export const Card: React.FC<CardProps> = ({ children, style }) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.cardBackground,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    padding: 16,
+    padding: 18,
     marginBottom: 12,
     ...Platform.select({
       ios: {
-        shadowColor: '#1A2E1A',
+        shadowColor: '#0F172A',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.07,
-        shadowRadius: 8,
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
       },
       android: {
         elevation: 2,

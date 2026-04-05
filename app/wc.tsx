@@ -146,12 +146,16 @@ export default function WCScreen() {
             const data = (response.normalized_data && Object.keys(response.normalized_data).length > 0)
               ? response.normalized_data
               : response.parsed_data;
-            if (data.current_assets) setCurrentAssets(String(data.current_assets));
-            if (data.current_liabilities) setCurrentLiabilities(String(data.current_liabilities));
-            if (data.inventory) setInventory(String(data.inventory));
-            if (data.receivables || data.debtors) setDebtors(String(data.receivables || data.debtors));
-            if (data.payables || data.creditors) setCreditors(String(data.payables || data.creditors));
-            if (data.cash || data.cash_bank_balance) setCashBank(String(data.cash || data.cash_bank_balance));
+            console.log('[WC] BS parsed data:', JSON.stringify(data));
+            if (data.current_assets != null) setCurrentAssets(String(data.current_assets));
+            if (data.current_liabilities != null) setCurrentLiabilities(String(data.current_liabilities));
+            if (data.inventory != null) setInventory(String(data.inventory));
+            const debtorsVal = data.receivables ?? data.debtors;
+            if (debtorsVal != null) setDebtors(String(debtorsVal));
+            const creditorsVal = data.payables ?? data.creditors;
+            if (creditorsVal != null) setCreditors(String(creditorsVal));
+            const cashVal = data.cash ?? data.cash_bank_balance;
+            if (cashVal != null) setCashBank(String(cashVal));
             bsSuccess = Object.keys(data).length > 0;
           }
         } catch (bsError: any) {
@@ -178,11 +182,16 @@ export default function WCScreen() {
             const data = (response.normalized_data && Object.keys(response.normalized_data).length > 0)
               ? response.normalized_data
               : response.parsed_data;
-            if (data.revenue || data.sales) setRevenue(String(data.revenue || data.sales));
-            if (data.cogs || data.cost_of_goods_sold) setCogs(String(data.cogs || data.cost_of_goods_sold));
-            if (data.purchases) setPurchases(String(data.purchases));
-            if (data.expenses || data.operating_expenses) setOpex(String(data.expenses || data.operating_expenses));
-            if (data.net_profit || data.profit) setNetProfit(String(data.net_profit || data.profit));
+            console.log('[WC] PL parsed data:', JSON.stringify(data));
+            const revenueVal = data.revenue ?? data.sales;
+            if (revenueVal != null) setRevenue(String(revenueVal));
+            const cogsVal = data.cogs ?? data.cost_of_goods_sold;
+            if (cogsVal != null) setCogs(String(cogsVal));
+            if (data.purchases != null) setPurchases(String(data.purchases));
+            const opexVal = data.expenses ?? data.operating_expenses;
+            if (opexVal != null) setOpex(String(opexVal));
+            const netProfitVal = data.net_profit ?? data.profit;
+            if (netProfitVal != null) setNetProfit(String(netProfitVal));
             plSuccess = Object.keys(data).length > 0;
           }
         } catch (plError: any) {
@@ -314,6 +323,12 @@ export default function WCScreen() {
     return ratio >= benchmark ? colors.green : colors.red;
   };
 
+  const getRiskColor = (color: string) => {
+    if (color === 'green') return colors.green;
+    if (color === 'red') return colors.red;
+    return colors.yellow; // amber
+  };
+
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return '';
     if (bytes < 1024) return `${bytes} B`;
@@ -341,7 +356,7 @@ export default function WCScreen() {
             <View style={styles.stepNumber}>
               <Text style={styles.stepNumberText}>1</Text>
             </View>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={styles.stepTitle}>Upload Documents</Text>
               <Text style={styles.stepSubtitle}>Select your financial documents — values are auto-extracted</Text>
             </View>
@@ -416,7 +431,7 @@ export default function WCScreen() {
             <View style={styles.stepNumber}>
               <Text style={styles.stepNumberText}>2</Text>
             </View>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={styles.stepTitle}>Calculate Working Capital</Text>
               <Text style={styles.stepSubtitle}>Tap to run ratio analysis using extracted or entered values</Text>
             </View>
@@ -444,9 +459,11 @@ export default function WCScreen() {
             </LinearGradient>
           </TouchableOpacity>
 
-          <Text style={styles.uploadHint}>
-            Upload documents above for auto-fill, or tap "Enter Manually" to type values.
-          </Text>
+          <View style={styles.uploadHintContainer}>
+            <Text style={styles.uploadHint}>
+              Upload documents above for auto-fill, or tap "Enter Manually" to type values.
+            </Text>
+          </View>
 
           <TouchableOpacity
             style={styles.toggleInputs}
@@ -483,15 +500,17 @@ export default function WCScreen() {
         )}
 
         {/* Results */}
-        <View style={styles.stepHeader}>
-          <View style={styles.stepNumber}>
-            <Text style={styles.stepNumberText}>3</Text>
+        <Card>
+          <View style={styles.stepHeader}>
+            <View style={styles.stepNumber}>
+              <Text style={styles.stepNumberText}>3</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.stepTitle}>Analysis Results</Text>
+              <Text style={styles.stepSubtitle}>Working capital ratios and eligibility</Text>
+            </View>
           </View>
-          <View>
-            <Text style={styles.stepTitle}>Analysis Results</Text>
-            <Text style={styles.stepSubtitle}>Working capital ratios and eligibility</Text>
-          </View>
-        </View>
+        </Card>
 
         {/* WC Loan Eligibility */}
         <Card>
@@ -568,6 +587,39 @@ export default function WCScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Risk Indicators */}
+        {result?.risk_indicators && (
+          <Card>
+            <Text style={styles.riskTitle}>Risk Indicators</Text>
+            <View style={styles.riskRow}>
+              <View style={styles.riskItem}>
+                <Text style={styles.riskLabel}>Current Ratio</Text>
+                <View style={[styles.riskBadge, { backgroundColor: getRiskColor(result.risk_indicators.current_ratio.color) + '20' }]}>
+                  <Text style={[styles.riskBadgeText, { color: getRiskColor(result.risk_indicators.current_ratio.color) }]}>
+                    {result.risk_indicators.current_ratio.label}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.riskItem}>
+                <Text style={styles.riskLabel}>WC Cycle</Text>
+                <View style={[styles.riskBadge, { backgroundColor: getRiskColor(result.risk_indicators.wc_cycle.color) + '20' }]}>
+                  <Text style={[styles.riskBadgeText, { color: getRiskColor(result.risk_indicators.wc_cycle.color) }]}>
+                    {result.risk_indicators.wc_cycle.label}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.riskItem}>
+                <Text style={styles.riskLabel}>Net WC</Text>
+                <View style={[styles.riskBadge, { backgroundColor: getRiskColor(result.risk_indicators.nwc.color) + '20' }]}>
+                  <Text style={[styles.riskBadgeText, { color: getRiskColor(result.risk_indicators.nwc.color) }]}>
+                    {result.risk_indicators.nwc.label}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </Card>
+        )}
 
         {/* Eligibility Status */}
         <Card style={result?.eligible ? styles.eligibleCard : styles.notEligibleCard}>
@@ -738,7 +790,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   parseButton: {
-    borderRadius: 10,
+    borderRadius: 12,
     overflow: 'hidden',
     marginTop: 6,
   },
@@ -755,7 +807,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   calculateButton: {
-    borderRadius: 10,
+    borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 12,
   },
@@ -771,11 +823,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+  uploadHintContainer: {
+    flex: 1,
+  },
   uploadHint: {
     color: colors.textMuted,
     fontSize: 11,
     textAlign: 'center',
     marginBottom: 8,
+    flexWrap: 'wrap',
   },
   toggleInputs: {
     alignItems: 'center',
@@ -909,5 +965,38 @@ const styles = StyleSheet.create({
   resetButtonText: {
     color: colors.textSecondary,
     fontSize: 14,
+  },
+  riskTitle: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  riskRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  riskItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 6,
+  },
+  riskLabel: {
+    color: colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  riskBadge: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: 'center',
+  },
+  riskBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
 });

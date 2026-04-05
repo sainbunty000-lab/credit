@@ -1,49 +1,49 @@
 export const colors = {
   // Background
-  background: '#F4F6F4',
+  background: '#F8FAFC',
   cardBackground: '#FFFFFF',
-  cardBorder: '#E2EDE2',
-  inputBackground: '#F0F5F0',
+  cardBorder: '#E2E8F0',
+  inputBackground: '#F1F5F9',
 
   // Text
-  text: '#1A2E1A',
-  textSecondary: '#5A7A5A',
-  textMuted: '#9CB49C',
+  text: '#0F172A',
+  textSecondary: '#64748B',
+  textMuted: '#94A3B8',
 
-  // Primary colors – muted green
-  primary: '#4CAF50',
-  primaryDark: '#388E3C',
-  primaryLight: '#E8F5E9',
+  // Primary colors – fintech green
+  primary: '#16A34A',
+  primaryDark: '#15803D',
+  primaryLight: '#DCFCE7',
 
   // Accent colors
-  yellow: '#F9A825',
-  green: '#43A047',
-  red: '#E53935',
-  orange: '#FB8C00',
-  purple: '#8E24AA',
-  cyan: '#00ACC1',
+  yellow: '#F59E0B',
+  green: '#22C55E',
+  red: '#EF4444',
+  orange: '#F97316',
+  purple: '#8B5CF6',
+  cyan: '#06B6D4',
 
-  // Gradient colors (green shades)
-  gradientStart: '#4CAF50',
-  gradientEnd: '#43A047',
+  // Gradient colors (premium green)
+  gradientStart: '#16A34A',
+  gradientEnd: '#22C55E',
 
   // Status colors
-  success: '#43A047',
-  warning: '#F9A825',
-  error: '#E53935',
-  info: '#00ACC1',
+  success: '#22C55E',
+  warning: '#F59E0B',
+  error: '#EF4444',
+  info: '#06B6D4',
 
   // Tab bar
   tabBarBackground: '#FFFFFF',
-  tabBarBorder: '#E2EDE2',
-  tabActive: '#4CAF50',
-  tabInactive: '#9CB49C',
+  tabBarBorder: '#E2E8F0',
+  tabActive: '#16A34A',
+  tabInactive: '#94A3B8',
 
   // Chart colors
-  chartLine: '#4CAF50',
-  chartBar: '#81C784',
-  chartBarAlt: '#A5D6A7',
-  chartGrid: '#E2EDE2',
+  chartLine: '#16A34A',
+  chartBar: '#22C55E',
+  chartBarAlt: '#4ADE80',
+  chartGrid: '#E2E8F0',
   // Table
-  tableRowAlt: '#FAFFFE',
+  tableRowAlt: '#F8FAFC',
 };

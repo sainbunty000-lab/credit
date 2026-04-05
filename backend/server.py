@@ -98,6 +98,7 @@ class WorkingCapitalResult(BaseModel):
     assessment: List[str]
     recommendation: str
     suggestions: List[str] = Field(default_factory=list)
+    risk_indicators: Optional[Dict[str, Any]] = None
     analysis_type: str = "working_capital"
 
 class BankingInput(BaseModel):
@@ -354,6 +355,46 @@ def calculate_working_capital(data: WorkingCapitalInput) -> WorkingCapitalResult
     if wc_cycle > 90:
         suggestions.append("Working capital cycle indicates higher funding requirement.")
 
+    # ── Risk Indicators ────────────────────────────────────────────────────────
+    # Current Ratio risk
+    if current_ratio < 1:
+        cr_color = "red"
+        cr_label = "Weak"
+    elif current_ratio <= 1.33:
+        cr_color = "amber"
+        cr_label = "Moderate"
+    else:
+        cr_color = "green"
+        cr_label = "Strong"
+
+    # WC Cycle risk
+    if wc_cycle > 90:
+        wcc_color = "red"
+        wcc_label = "High"
+    elif wc_cycle >= 60:
+        wcc_color = "amber"
+        wcc_label = "Moderate"
+    else:
+        wcc_color = "green"
+        wcc_label = "Efficient"
+
+    # NWC risk
+    if net_working_capital < 0:
+        nwc_color = "red"
+        nwc_label = "Risk"
+    elif net_working_capital < (bs.current_assets * 0.2 if bs.current_assets > 0 else 1):
+        nwc_color = "amber"
+        nwc_label = "Moderate"
+    else:
+        nwc_color = "green"
+        nwc_label = "Healthy"
+
+    risk_indicators = {
+        "current_ratio": {"color": cr_color, "label": cr_label},
+        "wc_cycle": {"color": wcc_color, "label": wcc_label},
+        "nwc": {"color": nwc_color, "label": nwc_label},
+    }
+
     return WorkingCapitalResult(
         company_name=data.company_name,
         input_data={
@@ -381,6 +422,7 @@ def calculate_working_capital(data: WorkingCapitalInput) -> WorkingCapitalResult
         assessment=assessment,
         recommendation=recommendation,
         suggestions=suggestions,
+        risk_indicators=risk_indicators,
     )
 
 def calculate_gst_itr(data: GstItrInput) -> GstItrResult:
@@ -836,6 +878,9 @@ def calculate_multi_year_trends(data: MultiYearInput) -> MultiYearResult:
         "gross_margin": [],
         "net_margin": []
     }
+
+    # Per-year HDFC structured data (year, current_ratio, nwc, wc_cycle)
+    yearly_data = []
     
     for yd in data.years_data:
         bs = yd.balance_sheet
@@ -855,6 +900,26 @@ def calculate_multi_year_trends(data: MultiYearInput) -> MultiYearResult:
         
         net_margin = (pl.net_profit / pl.revenue * 100) if pl.revenue > 0 else 0
         trends["net_margin"].append(round(net_margin, 1))
+
+        # HDFC per-year WC cycle calculation (same strict formulas as single-year)
+        debtor_days = (bs.debtors / pl.revenue * 365) if pl.revenue > 0 else 0
+        if pl.purchases > 0:
+            creditor_days = (bs.creditors / pl.purchases) * 365
+            inventory_days = (bs.inventory / pl.purchases) * 365
+        else:
+            creditor_days = 0
+            inventory_days = 0
+        wc_cycle = round(debtor_days + inventory_days - creditor_days, 1)
+
+        yearly_data.append({
+            "year": yd.year,
+            "current_ratio": round(current_ratio, 2),
+            "nwc": nwc,
+            "wc_cycle": wc_cycle,
+            "debtor_days": round(debtor_days, 1),
+            "creditor_days": round(creditor_days, 1),
+            "inventory_days": round(inventory_days, 1),
+        })
     
     insights = []
     rev_growth = 0
@@ -929,16 +994,84 @@ def calculate_multi_year_trends(data: MultiYearInput) -> MultiYearResult:
     else:
         eligibility_status = "Not Eligible"
 
+    # ── Trend direction analysis across years ─────────────────────────────────
+    def _trend_direction(values: List[float]) -> str:
+        """Detect trend direction from a list of values."""
+        if len(values) < 2:
+            return "stable"
+        all_inc = all(values[i] <= values[i + 1] for i in range(len(values) - 1))
+        all_dec = all(values[i] >= values[i + 1] for i in range(len(values) - 1))
+        if all_inc:
+            return "increasing"
+        if all_dec:
+            return "decreasing"
+        return "fluctuating"
+
+    cr_direction = _trend_direction(trends["current_ratio"])
+    wcc_values = [yd["wc_cycle"] for yd in yearly_data]
+    wcc_direction = _trend_direction(wcc_values)
+    nwc_direction = _trend_direction(trends["net_working_capital"])
+
+    def _direction_indicator(direction: str, invert: bool = False) -> Dict[str, str]:
+        """Map direction to color/label. invert=True means higher is worse (e.g. wc_cycle)."""
+        if direction == "increasing":
+            color, label = ("green", "🟢 Improving") if not invert else ("red", "🔴 Risk")
+        elif direction == "decreasing":
+            color, label = ("red", "🔴 Risk") if not invert else ("green", "🟢 Improving")
+        else:
+            color, label = ("amber", "🟡 Unstable")
+        return {"direction": direction, "color": color, "label": label}
+
+    trend_indicators = {
+        "current_ratio": _direction_indicator(cr_direction),
+        "wc_cycle": _direction_indicator(wcc_direction, invert=True),
+        "nwc": _direction_indicator(nwc_direction),
+    }
+
+    # Trend alerts
+    trend_alerts: List[str] = []
+    if cr_direction == "decreasing":
+        trend_alerts.append("Declining liquidity → risk increasing")
+    if wcc_direction == "decreasing":
+        trend_alerts.append("Improving working capital cycle")
+    elif wcc_direction == "increasing":
+        trend_alerts.append("Working capital cycle is lengthening — higher funding requirement")
+    if wcc_direction == "fluctuating" or cr_direction == "fluctuating":
+        trend_alerts.append("Fluctuating financial performance")
+    if nwc_direction == "decreasing":
+        trend_alerts.append("Net working capital is shrinking — monitor liquidity")
+
+    # Trend risk score
+    trend_risk_score = 0
+    for indicator in trend_indicators.values():
+        if indicator["color"] == "red":
+            trend_risk_score += 2
+        elif indicator["color"] == "amber":
+            trend_risk_score += 1
+
+    if trend_risk_score >= 4:
+        overall_trend = "🔴 High Risk Trend"
+    elif trend_risk_score >= 2:
+        overall_trend = "🟡 Moderate Risk"
+    else:
+        overall_trend = "🟢 Stable Trend"
+
     trend_analysis: Dict[str, Any] = {
         "years": years,
+        "yearly_data": yearly_data,
         "revenue": rev_list,
         "profit": profit_list,
         "working_capital": wc_list,
+        "wc_cycle": wcc_values,
         "metrics": {
             "revenue_growth": revenue_growth,
             "profit_growth": profit_growth,
             "wc_growth": wc_growth,
         },
+        "trend_indicators": trend_indicators,
+        "alerts": trend_alerts,
+        "overall_trend": overall_trend,
+        "trend_risk_score": trend_risk_score,
         "analysis": {
             "eligibility_status": eligibility_status,
             "summary": recommendation,
