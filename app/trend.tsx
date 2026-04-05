@@ -329,86 +329,75 @@ export default function TrendScreen() {
           subtitle="Balance Sheet & P&L Trend Comparison"
         />
 
-        {/* Upload Financial Documents — one section per year */}
-        {yearsData.map((y, idx) => {
-          const { plFile, bsFile } = yearFiles[idx];
-          const isParsing = parsingYear === idx;
-          const hasAnyFile = !!(plFile || bsFile);
-          return (
-            <Card key={idx}>
-              <View style={styles.stepHeader}>
-                <View style={styles.stepNumber}>
-                  <Text style={styles.stepNumberText}>{idx + 1}</Text>
-                </View>
-                <View>
-                  <Text style={styles.stepTitle}>Upload Documents — FY {y.year}</Text>
-                  <Text style={styles.stepSubtitle}>Upload P&L and Balance Sheet for autofill</Text>
-                </View>
-              </View>
+        {/* Upload Financial Documents — compact single card */}
+        <Card>
+          <View style={styles.stepHeader}>
+            <Ionicons name="cloud-upload-outline" size={20} color={colors.primary} />
+            <View>
+              <Text style={styles.stepTitle}>Upload Financial Documents</Text>
+              <Text style={styles.stepSubtitle}>Select P&L and Balance Sheet per year for autofill</Text>
+            </View>
+          </View>
 
-              {/* P&L File Picker */}
-              <Text style={styles.uploadLabel}>Profit & Loss Statement</Text>
-              <TouchableOpacity style={styles.uploadButton} onPress={() => pickFile(idx, 'pl')}>
-                <Ionicons
-                  name={plFile ? 'checkmark-circle' : 'cloud-upload-outline'}
-                  size={20}
-                  color={plFile ? colors.green : colors.primary}
-                />
-                <View style={styles.uploadTextContainer}>
-                  <Text style={[styles.uploadButtonTextStyle, plFile && styles.uploadButtonTextSelected]}>
-                    {plFile ? plFile.name : 'Select P&L (PDF / Excel / CSV)'}
+          {/* Column headers */}
+          <View style={styles.uploadRowHeader}>
+            <Text style={[styles.uploadColLabel, { flex: 1 }]}>Year</Text>
+            <Text style={[styles.uploadColLabel, { flex: 2 }]}>P&L Statement</Text>
+            <Text style={[styles.uploadColLabel, { flex: 2 }]}>Balance Sheet</Text>
+            <Text style={[styles.uploadColLabel, { width: 36 }]}> </Text>
+          </View>
+
+          {yearsData.map((y, idx) => {
+            const { plFile, bsFile } = yearFiles[idx];
+            const isParsing = parsingYear === idx;
+            const hasAnyFile = !!(plFile || bsFile);
+            return (
+              <View key={idx} style={[styles.uploadRow, idx < yearsData.length - 1 && styles.uploadRowBorder]}>
+                {/* Year badge */}
+                <View style={styles.yearBadge}>
+                  <Text style={styles.yearBadgeText}>FY{'\n'}{y.year}</Text>
+                </View>
+
+                {/* P&L pick */}
+                <TouchableOpacity style={styles.compactUploadBtn} onPress={() => pickFile(idx, 'pl')}>
+                  <Ionicons
+                    name={plFile ? 'checkmark-circle' : 'add-circle-outline'}
+                    size={16}
+                    color={plFile ? colors.green : colors.primary}
+                  />
+                  <Text style={[styles.compactUploadText, plFile && styles.compactUploadTextSelected]} numberOfLines={1}>
+                    {plFile ? plFile.name : 'Select P&L'}
                   </Text>
-                  {plFile && <Text style={styles.fileSize}>{formatFileSize(plFile.size)}</Text>}
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-
-              {/* Balance Sheet File Picker */}
-              <Text style={[styles.uploadLabel, { marginTop: 8 }]}>Balance Sheet</Text>
-              <TouchableOpacity style={styles.uploadButton} onPress={() => pickFile(idx, 'bs')}>
-                <Ionicons
-                  name={bsFile ? 'checkmark-circle' : 'cloud-upload-outline'}
-                  size={20}
-                  color={bsFile ? colors.green : colors.primary}
-                />
-                <View style={styles.uploadTextContainer}>
-                  <Text style={[styles.uploadButtonTextStyle, bsFile && styles.uploadButtonTextSelected]}>
-                    {bsFile ? bsFile.name : 'Select Balance Sheet (PDF / Excel / CSV)'}
-                  </Text>
-                  {bsFile && <Text style={styles.fileSize}>{formatFileSize(bsFile.size)}</Text>}
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-
-              {hasAnyFile && (
-                <TouchableOpacity
-                  style={styles.parseButton}
-                  onPress={() => handleParseYear(idx)}
-                  disabled={isParsing}
-                >
-                  <LinearGradient
-                    colors={[colors.yellow, colors.orange]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.parseGradient}
-                  >
-                    {isParsing ? (
-                      <>
-                        <ActivityIndicator color="#fff" size="small" />
-                        <Text style={styles.parseText}>Parsing {plFile && bsFile ? 'Documents' : 'Document'}...</Text>
-                      </>
-                    ) : (
-                      <>
-                        <Ionicons name="scan-outline" size={20} color="#fff" />
-                        <Text style={styles.parseText}>Parse & Autofill FY {y.year}</Text>
-                      </>
-                    )}
-                  </LinearGradient>
                 </TouchableOpacity>
-              )}
-            </Card>
-          );
-        })}
+
+                {/* BS pick */}
+                <TouchableOpacity style={styles.compactUploadBtn} onPress={() => pickFile(idx, 'bs')}>
+                  <Ionicons
+                    name={bsFile ? 'checkmark-circle' : 'add-circle-outline'}
+                    size={16}
+                    color={bsFile ? colors.green : colors.primary}
+                  />
+                  <Text style={[styles.compactUploadText, bsFile && styles.compactUploadTextSelected]} numberOfLines={1}>
+                    {bsFile ? bsFile.name : 'Select BS'}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Parse icon button */}
+                <TouchableOpacity
+                  style={[styles.compactParseBtn, !hasAnyFile && styles.compactParseBtnDisabled]}
+                  onPress={() => hasAnyFile && handleParseYear(idx)}
+                  disabled={!hasAnyFile || isParsing}
+                >
+                  {isParsing ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Ionicons name="scan-outline" size={16} color="#fff" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </Card>
 
         {/* Year Tabs */}
         <View style={styles.yearTabs}>
@@ -846,6 +835,74 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 15,
     fontWeight: '600',
+  },
+  uploadRowHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
+  },
+  uploadColLabel: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  uploadRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+  },
+  uploadRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
+  },
+  yearBadge: {
+    flex: 1,
+    backgroundColor: colors.primary + '20',
+    borderRadius: 8,
+    paddingVertical: 6,
+    alignItems: 'center',
+  },
+  yearBadgeText: {
+    color: colors.primary,
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  compactUploadBtn: {
+    flex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.inputBackground,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    gap: 6,
+  },
+  compactUploadText: {
+    flex: 1,
+    color: colors.textSecondary,
+    fontSize: 11,
+  },
+  compactUploadTextSelected: {
+    color: colors.text,
+    fontWeight: '500',
+  },
+  compactParseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactParseBtnDisabled: {
+    backgroundColor: colors.textMuted,
+    opacity: 0.4,
   },
   yearTabs: {
     flexDirection: 'row',
