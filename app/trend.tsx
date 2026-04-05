@@ -83,8 +83,12 @@ export default function TrendScreen() {
   const [activeYear, setActiveYear] = useState(0);
   const [companyName, setCompanyName] = useState('Company');
   const [exporting, setExporting] = useState(false);
-  const [financialFile, setFinancialFile] = useState<SelectedFile | null>(null);
-  const [parsing, setParsing] = useState(false);
+  const [yearFiles, setYearFiles] = useState<{ plFile: SelectedFile | null; bsFile: SelectedFile | null }[]>([
+    { plFile: null, bsFile: null },
+    { plFile: null, bsFile: null },
+    { plFile: null, bsFile: null },
+  ]);
+  const [parsingYear, setParsingYear] = useState<number | null>(null);
 
   const currentYear = new Date().getFullYear();
   const [yearsData, setYearsData] = useState<YearInputs[]>([
@@ -100,7 +104,7 @@ export default function TrendScreen() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const pickFinancialDocument = async () => {
+  const pickFile = async (yearIndex: number, fileType: 'pl' | 'bs') => {
     try {
       const picked = await DocumentPicker.getDocumentAsync({
         type: '*/*',
@@ -120,11 +124,20 @@ export default function TrendScreen() {
           return;
         }
 
-        setFinancialFile({
+        const selectedFile: SelectedFile = {
           name: file.name,
           uri: file.uri,
           type: getMimeTypeFromExtension(file.name),
           size: file.size,
+        };
+
+        setYearFiles(prev => {
+          const updated = [...prev];
+          updated[yearIndex] = {
+            ...updated[yearIndex],
+            [fileType === 'pl' ? 'plFile' : 'bsFile']: selectedFile,
+          };
+          return updated;
         });
       }
     } catch (error) {
@@ -133,66 +146,54 @@ export default function TrendScreen() {
     }
   };
 
-  const handleParseFinancialDocument = async () => {
-    if (!financialFile) {
-      Alert.alert('No File', 'Please select a financial document to parse.');
+  const handleParseYear = async (yearIndex: number) => {
+    const { plFile, bsFile } = yearFiles[yearIndex];
+    if (!plFile && !bsFile) {
+      Alert.alert('No Files', 'Please select at least one file (P&L or Balance Sheet) to parse.');
       return;
     }
 
-    setParsing(true);
+    setParsingYear(yearIndex);
 
     try {
-      console.log('Sending financial document to backend:', financialFile.name);
+      const updated = [...yearsData];
+      const target = { ...updated[yearIndex] };
+      let hasData = false;
 
-      const response = await parseDocument(
-        financialFile.uri,
-        financialFile.name,
-        financialFile.type,
-        'financial_statement'
-      );
-
-      console.log('Parse response:', response);
-
-      if (response.success && response.parsed_data) {
-        const data = response.parsed_data;
-        let hasData = false;
-
-        // Map parsed fields into the active year's inputs
-        const updated = [...yearsData];
-        const target = { ...updated[activeYear] };
-
-        if (data.revenue) { target.revenue = String(data.revenue); hasData = true; }
-        if (data.net_profit) { target.netProfit = String(data.net_profit); hasData = true; }
-        if (data.cogs) { target.cogs = String(data.cogs); hasData = true; }
-        if (data.purchases) { target.purchases = String(data.purchases); hasData = true; }
-        if (data.operating_expenses) { target.opex = String(data.operating_expenses); hasData = true; }
-        if (data.current_assets) { target.currentAssets = String(data.current_assets); hasData = true; }
-        if (data.current_liabilities) { target.currentLiabilities = String(data.current_liabilities); hasData = true; }
-        if (data.inventory) { target.inventory = String(data.inventory); hasData = true; }
-        if (data.debtors) { target.debtors = String(data.debtors); hasData = true; }
-        if (data.creditors) { target.creditors = String(data.creditors); hasData = true; }
-        if (data.cash_bank_balance) { target.cashBank = String(data.cash_bank_balance); hasData = true; }
-
-        updated[activeYear] = target;
-        setYearsData(updated);
-
-        if (hasData) {
-          Alert.alert(
-            'Parsing Complete',
-            `Financial document parsed using Gemini Vision AI!\n\nExtracted values filled into FY ${target.year}. Please verify and edit if needed.`
-          );
-        } else {
-          Alert.alert(
-            'Parsing Issue',
-            'Text was extracted but no financial values found.\n\nPlease enter values manually.'
-          );
+      if (plFile) {
+        const response = await parseDocument(plFile.uri, plFile.name, plFile.type, 'profit_loss');
+        if (response.success && response.parsed_data) {
+          const data = response.parsed_data;
+          if (data.revenue) { target.revenue = String(data.revenue); hasData = true; }
+          if (data.net_profit) { target.netProfit = String(data.net_profit); hasData = true; }
+          if (data.cogs) { target.cogs = String(data.cogs); hasData = true; }
+          if (data.purchases) { target.purchases = String(data.purchases); hasData = true; }
+          if (data.operating_expenses) { target.opex = String(data.operating_expenses); hasData = true; }
         }
-      } else {
-        Alert.alert(
-          'Parsing Issue',
-          response.message || 'Could not extract data from the document.\n\nPlease enter values manually.'
-        );
       }
+
+      if (bsFile) {
+        const response = await parseDocument(bsFile.uri, bsFile.name, bsFile.type, 'balance_sheet');
+        if (response.success && response.parsed_data) {
+          const data = response.parsed_data;
+          if (data.current_assets) { target.currentAssets = String(data.current_assets); hasData = true; }
+          if (data.current_liabilities) { target.currentLiabilities = String(data.current_liabilities); hasData = true; }
+          if (data.inventory) { target.inventory = String(data.inventory); hasData = true; }
+          if (data.debtors) { target.debtors = String(data.debtors); hasData = true; }
+          if (data.creditors) { target.creditors = String(data.creditors); hasData = true; }
+          if (data.cash_bank_balance) { target.cashBank = String(data.cash_bank_balance); hasData = true; }
+        }
+      }
+
+      updated[yearIndex] = target;
+      setYearsData(updated);
+
+      Alert.alert(
+        hasData ? 'Parsing Complete' : 'Parsing Issue',
+        hasData
+          ? `Documents parsed using Gemini Vision AI!\n\nExtracted values filled into FY ${target.year}. Please verify and edit if needed.`
+          : 'Text was extracted but no financial values found.\n\nPlease enter values manually.'
+      );
     } catch (error: any) {
       console.log('Parse error:', error);
       Alert.alert(
@@ -201,7 +202,7 @@ export default function TrendScreen() {
       );
     }
 
-    setParsing(false);
+    setParsingYear(null);
   };
 
   const updateYearField = (yearIndex: number, field: keyof YearInputs, value: string) => {
@@ -273,6 +274,11 @@ export default function TrendScreen() {
       defaultYear(`${currentYear - 1}`),
       defaultYear(`${currentYear}`),
     ]);
+    setYearFiles([
+      { plFile: null, bsFile: null },
+      { plFile: null, bsFile: null },
+      { plFile: null, bsFile: null },
+    ]);
   };
 
   const handleExportPDF = async () => {
@@ -312,62 +318,86 @@ export default function TrendScreen() {
           subtitle="Balance Sheet & P&L Trend Comparison"
         />
 
-        {/* Upload Financial Document */}
-        <Card>
-          <View style={styles.stepHeader}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>1</Text>
-            </View>
-            <View>
-              <Text style={styles.stepTitle}>Upload Financial Document</Text>
-              <Text style={styles.stepSubtitle}>Select a Balance Sheet or P&L statement for autofill</Text>
-            </View>
-          </View>
+        {/* Upload Financial Documents — one section per year */}
+        {yearsData.map((y, idx) => {
+          const { plFile, bsFile } = yearFiles[idx];
+          const isParsing = parsingYear === idx;
+          const hasAnyFile = !!(plFile || bsFile);
+          return (
+            <Card key={idx}>
+              <View style={styles.stepHeader}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>{idx + 1}</Text>
+                </View>
+                <View>
+                  <Text style={styles.stepTitle}>Upload Documents — FY {y.year}</Text>
+                  <Text style={styles.stepSubtitle}>Upload P&L and Balance Sheet for autofill</Text>
+                </View>
+              </View>
 
-          <TouchableOpacity style={styles.uploadButton} onPress={pickFinancialDocument}>
-            <Ionicons
-              name={financialFile ? 'checkmark-circle' : 'cloud-upload-outline'}
-              size={20}
-              color={financialFile ? colors.green : colors.primary}
-            />
-            <View style={styles.uploadTextContainer}>
-              <Text style={[styles.uploadButtonTextStyle, financialFile && styles.uploadButtonTextSelected]}>
-                {financialFile ? financialFile.name : 'Select Financial Statement (PDF / Excel / CSV)'}
-              </Text>
-              {financialFile && (
-                <Text style={styles.fileSize}>{formatFileSize(financialFile.size)}</Text>
+              {/* P&L File Picker */}
+              <Text style={styles.uploadLabel}>Profit & Loss Statement</Text>
+              <TouchableOpacity style={styles.uploadButton} onPress={() => pickFile(idx, 'pl')}>
+                <Ionicons
+                  name={plFile ? 'checkmark-circle' : 'cloud-upload-outline'}
+                  size={20}
+                  color={plFile ? colors.green : colors.primary}
+                />
+                <View style={styles.uploadTextContainer}>
+                  <Text style={[styles.uploadButtonTextStyle, plFile && styles.uploadButtonTextSelected]}>
+                    {plFile ? plFile.name : 'Select P&L (PDF / Excel / CSV)'}
+                  </Text>
+                  {plFile && <Text style={styles.fileSize}>{formatFileSize(plFile.size)}</Text>}
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              {/* Balance Sheet File Picker */}
+              <Text style={[styles.uploadLabel, { marginTop: 8 }]}>Balance Sheet</Text>
+              <TouchableOpacity style={styles.uploadButton} onPress={() => pickFile(idx, 'bs')}>
+                <Ionicons
+                  name={bsFile ? 'checkmark-circle' : 'cloud-upload-outline'}
+                  size={20}
+                  color={bsFile ? colors.green : colors.primary}
+                />
+                <View style={styles.uploadTextContainer}>
+                  <Text style={[styles.uploadButtonTextStyle, bsFile && styles.uploadButtonTextSelected]}>
+                    {bsFile ? bsFile.name : 'Select Balance Sheet (PDF / Excel / CSV)'}
+                  </Text>
+                  {bsFile && <Text style={styles.fileSize}>{formatFileSize(bsFile.size)}</Text>}
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              {hasAnyFile && (
+                <TouchableOpacity
+                  style={styles.parseButton}
+                  onPress={() => handleParseYear(idx)}
+                  disabled={isParsing}
+                >
+                  <LinearGradient
+                    colors={[colors.yellow, colors.orange]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.parseGradient}
+                  >
+                    {isParsing ? (
+                      <>
+                        <ActivityIndicator color="#fff" size="small" />
+                        <Text style={styles.parseText}>Parsing {plFile && bsFile ? 'Documents' : 'Document'}...</Text>
+                      </>
+                    ) : (
+                      <>
+                        <Ionicons name="scan-outline" size={20} color="#fff" />
+                        <Text style={styles.parseText}>Parse & Autofill FY {y.year}</Text>
+                      </>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
               )}
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-
-          {financialFile && (
-            <TouchableOpacity
-              style={styles.parseButton}
-              onPress={handleParseFinancialDocument}
-              disabled={parsing}
-            >
-              <LinearGradient
-                colors={[colors.yellow, colors.orange]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.parseGradient}
-              >
-                {parsing ? (
-                  <>
-                    <ActivityIndicator color="#fff" size="small" />
-                    <Text style={styles.parseText}>Parsing Document...</Text>
-                  </>
-                ) : (
-                  <>
-                    <Ionicons name="scan-outline" size={20} color="#fff" />
-                    <Text style={styles.parseText}>Parse & Extract Data</Text>
-                  </>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-          )}
-        </Card>
+            </Card>
+          );
+        })}
 
         {/* Year Tabs */}
         <View style={styles.yearTabs}>
@@ -757,6 +787,12 @@ const styles = StyleSheet.create({
   stepSubtitle: {
     color: colors.textMuted,
     fontSize: 11,
+  },
+  uploadLabel: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 6,
   },
   uploadButton: {
     flexDirection: 'row',
