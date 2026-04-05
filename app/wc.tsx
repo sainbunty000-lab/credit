@@ -542,6 +542,19 @@ export default function WCScreen() {
         </View>
 
         <View style={styles.metricsRow}>
+          <MetricCard
+            value={`${result?.inventory_days || 0} d`}
+            label="Inventory Days"
+            color={colors.cyan}
+          />
+          <MetricCard
+            value={`₹${(result?.mpbf || 0).toLocaleString('en-IN')}`}
+            label="MPBF"
+            color={colors.green}
+          />
+        </View>
+
+        <View style={styles.metricsRow}>
           <View style={[styles.marginCard, { borderLeftColor: colors.green }]}>
             <Text style={styles.marginLabel}>GROSS MARGIN</Text>
             <Text style={[styles.marginValue, { color: colors.green }]}>
@@ -583,6 +596,19 @@ export default function WCScreen() {
                   color={point.includes('meets') || point.includes('healthy') || point.includes('efficient') ? colors.green : colors.yellow}
                 />
                 <Text style={styles.assessmentText}>{point}</Text>
+              </View>
+            ))}
+          </Card>
+        )}
+
+        {/* Advisory Suggestions */}
+        {result?.suggestions && result.suggestions.length > 0 && (
+          <Card>
+            <SectionHeader title="Advisory Suggestions" color={colors.orange} />
+            {result.suggestions.map((suggestion, idx) => (
+              <View key={idx} style={styles.assessmentRow}>
+                <Ionicons name="information-circle-outline" size={16} color={colors.orange} />
+                <Text style={styles.assessmentText}>{suggestion}</Text>
               </View>
             ))}
           </Card>
