@@ -163,25 +163,36 @@ export default function TrendScreen() {
       if (plFile) {
         const response = await parseDocument(plFile.uri, plFile.name, plFile.type, 'profit_loss');
         if (response.success && response.parsed_data) {
-          const data = response.parsed_data;
-          if (data.revenue) { target.revenue = String(data.revenue); hasData = true; }
-          if (data.net_profit) { target.netProfit = String(data.net_profit); hasData = true; }
-          if (data.cogs) { target.cogs = String(data.cogs); hasData = true; }
-          if (data.purchases) { target.purchases = String(data.purchases); hasData = true; }
-          if (data.operating_expenses) { target.opex = String(data.operating_expenses); hasData = true; }
+          const data = (response.normalized_data && Object.keys(response.normalized_data).length > 0)
+            ? response.normalized_data
+            : response.parsed_data;
+          const revenueVal = data.revenue ?? data.sales;
+          if (revenueVal != null) { target.revenue = String(revenueVal); hasData = true; }
+          const netProfitVal = data.net_profit ?? data.profit;
+          if (netProfitVal != null) { target.netProfit = String(netProfitVal); hasData = true; }
+          const cogsVal = data.cogs ?? data.cost_of_goods_sold;
+          if (cogsVal != null) { target.cogs = String(cogsVal); hasData = true; }
+          if (data.purchases != null) { target.purchases = String(data.purchases); hasData = true; }
+          const opexVal = data.expenses ?? data.operating_expenses;
+          if (opexVal != null) { target.opex = String(opexVal); hasData = true; }
         }
       }
 
       if (bsFile) {
         const response = await parseDocument(bsFile.uri, bsFile.name, bsFile.type, 'balance_sheet');
         if (response.success && response.parsed_data) {
-          const data = response.parsed_data;
-          if (data.current_assets) { target.currentAssets = String(data.current_assets); hasData = true; }
-          if (data.current_liabilities) { target.currentLiabilities = String(data.current_liabilities); hasData = true; }
-          if (data.inventory) { target.inventory = String(data.inventory); hasData = true; }
-          if (data.debtors) { target.debtors = String(data.debtors); hasData = true; }
-          if (data.creditors) { target.creditors = String(data.creditors); hasData = true; }
-          if (data.cash_bank_balance) { target.cashBank = String(data.cash_bank_balance); hasData = true; }
+          const data = (response.normalized_data && Object.keys(response.normalized_data).length > 0)
+            ? response.normalized_data
+            : response.parsed_data;
+          if (data.current_assets != null) { target.currentAssets = String(data.current_assets); hasData = true; }
+          if (data.current_liabilities != null) { target.currentLiabilities = String(data.current_liabilities); hasData = true; }
+          if (data.inventory != null) { target.inventory = String(data.inventory); hasData = true; }
+          const debtorsVal = data.receivables ?? data.debtors;
+          if (debtorsVal != null) { target.debtors = String(debtorsVal); hasData = true; }
+          const creditorsVal = data.payables ?? data.creditors;
+          if (creditorsVal != null) { target.creditors = String(creditorsVal); hasData = true; }
+          const cashVal = data.cash ?? data.cash_bank_balance;
+          if (cashVal != null) { target.cashBank = String(cashVal); hasData = true; }
         }
       }
 
