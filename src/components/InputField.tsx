@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet, ViewStyle } from 'react-native';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { ThemeColors } from '../theme/themes';
 
 interface InputFieldProps {
   label: string;
@@ -12,6 +13,39 @@ interface InputFieldProps {
   editable?: boolean;
 }
 
+function makeStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.cardBorder,
+    },
+    label: {
+      color: theme.subText,
+      fontSize: 14,
+      flex: 1,
+    },
+    input: {
+      backgroundColor: theme.inputBackground,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      color: theme.text,
+      fontSize: 14,
+      minWidth: 100,
+      textAlign: 'right',
+      borderWidth: 1,
+      borderColor: theme.cardBorder,
+    },
+    inputDisabled: {
+      opacity: 0.6,
+    },
+  });
+}
+
 export const InputField: React.FC<InputFieldProps> = ({
   label,
   value,
@@ -21,6 +55,8 @@ export const InputField: React.FC<InputFieldProps> = ({
   style,
   editable = true,
 }) => {
+  const { theme } = useTheme();
+  const styles = makeStyles(theme);
   return (
     <View style={[styles.container, style]}>
       <Text style={styles.label}>{label}</Text>
@@ -29,41 +65,10 @@ export const InputField: React.FC<InputFieldProps> = ({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={theme.textMuted}
         keyboardType={keyboardType}
         editable={editable}
       />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.cardBorder,
-  },
-  label: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    flex: 1,
-  },
-  input: {
-    backgroundColor: colors.inputBackground,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    color: colors.text,
-    fontSize: 14,
-    minWidth: 100,
-    textAlign: 'right',
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  inputDisabled: {
-    opacity: 0.6,
-  },
-});

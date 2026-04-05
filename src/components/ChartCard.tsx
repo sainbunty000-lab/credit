@@ -7,7 +7,8 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { ThemeColors } from '../theme/themes';
 
 interface ChartCardProps {
   title: string;
@@ -16,7 +17,50 @@ interface ChartCardProps {
   delay?: number;
 }
 
+function makeStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      backgroundColor: theme.card,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: theme.cardBorder,
+      padding: 16,
+      marginBottom: 14,
+      ...Platform.select({
+        ios: {
+          shadowColor: theme.glow ? theme.primary : '#1A2E1A',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: theme.glow ? 0.35 : 0.07,
+          shadowRadius: theme.glow ? 16 : 8,
+        },
+        android: {
+          elevation: theme.glow ? 8 : 2,
+        },
+      }),
+    },
+    header: {
+      marginBottom: 12,
+    },
+    title: {
+      color: theme.text,
+      fontSize: 15,
+      fontWeight: '700',
+    },
+    subtitle: {
+      color: theme.subText,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    chartArea: {
+      alignItems: 'center',
+    },
+  });
+}
+
 export const ChartCard: React.FC<ChartCardProps> = ({ title, subtitle, children, delay = 0 }) => {
+  const { theme } = useTheme();
+  const styles = makeStyles(theme);
+
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(16);
 
@@ -40,41 +84,3 @@ export const ChartCard: React.FC<ChartCardProps> = ({ title, subtitle, children,
     </Animated.View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    padding: 16,
-    marginBottom: 14,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#1A2E1A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.07,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  header: {
-    marginBottom: 12,
-  },
-  title: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  subtitle: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  chartArea: {
-    alignItems: 'center',
-  },
-});

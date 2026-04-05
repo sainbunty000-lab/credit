@@ -12,3 +12,4 @@ export { AppHeader } from './AppHeader';
 export { EligibilityBadge } from './EligibilityBadge';
 export { InsightCard } from './InsightCard';
 export { SummarySection } from './SummarySection';
+export { ThemeSwitcher } from './ThemeSwitcher';

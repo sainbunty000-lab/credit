@@ -5,7 +5,8 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as DocumentPicker from 'expo-document-picker';
-import { colors } from '../src/theme/colors';
+import { useTheme } from '../src/theme/ThemeContext';
+import { ThemeColors } from '../src/theme/themes';
 import { Card, SectionHeader, InputField, StatusBadge, AppHeader, InsightCard, SummarySection } from '../src/components';
 import { analyzeBanking, saveCase, parseDocument, exportPDF, getMimeTypeFromExtension } from '../src/api';
 import { BankingResult } from '../src/types';
@@ -19,6 +20,8 @@ interface SelectedFile {
 }
 
 export default function BankingScreen() {
+  const { theme } = useTheme();
+  const styles = makeStyles(theme);
   const { setBankingResult } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -246,10 +249,10 @@ export default function BankingScreen() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 85) return colors.green;
-    if (score >= 65) return colors.yellow;
-    if (score >= 50) return colors.orange;
-    return colors.red;
+    if (score >= 85) return theme.green;
+    if (score >= 65) return theme.yellow;
+    if (score >= 50) return theme.orange;
+    return theme.red;
   };
 
   const getStatusVariant = (status: string): 'success' | 'warning' | 'error' | 'neutral' => {
@@ -300,7 +303,7 @@ export default function BankingScreen() {
             <Ionicons 
               name={bankStatementFile ? "checkmark-circle" : "cloud-upload-outline"} 
               size={20} 
-              color={bankStatementFile ? colors.green : colors.primary} 
+              color={bankStatementFile ? theme.green : theme.primary} 
             />
             <View style={styles.uploadTextContainer}>
               <Text style={[styles.uploadButtonTextStyle, bankStatementFile && styles.uploadButtonTextSelected]}>
@@ -310,7 +313,7 @@ export default function BankingScreen() {
                 <Text style={styles.fileSize}>{formatFileSize(bankStatementFile.size)}</Text>
               )}
             </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
           </TouchableOpacity>
 
           {/* Parse Bank Statement Button */}
@@ -321,7 +324,7 @@ export default function BankingScreen() {
               disabled={parsing}
             >
               <LinearGradient
-                colors={[colors.yellow, colors.orange]}
+                colors={[theme.yellow, theme.orange]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.parseGradient}
@@ -349,7 +352,7 @@ export default function BankingScreen() {
           disabled={loading}
         >
           <LinearGradient
-            colors={[colors.green, colors.cyan]}
+            colors={[theme.green, theme.cyan]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.calculateGradient}
@@ -366,14 +369,14 @@ export default function BankingScreen() {
         </TouchableOpacity>
 
         {/* Credits & Debits */}
-        <SectionHeader title="Credits & Debits" color={colors.primary} />
+        <SectionHeader title="Credits & Debits" color={theme.primary} />
         <Card>
           <InputField label="Total Credits" value={totalCredits} onChangeText={setTotalCredits} />
           <InputField label="Total Debits" value={totalDebits} onChangeText={setTotalDebits} />
         </Card>
 
         {/* Account Balances */}
-        <SectionHeader title="Account Balances" color={colors.yellow} />
+        <SectionHeader title="Account Balances" color={theme.yellow} />
         <Card>
           <InputField label="Average Balance" value={avgBalance} onChangeText={setAvgBalance} />
           <InputField label="Minimum Balance" value={minBalance} onChangeText={setMinBalance} />
@@ -382,7 +385,7 @@ export default function BankingScreen() {
         </Card>
 
         {/* Risk Indicators */}
-        <SectionHeader title="Risk Indicators" color={colors.red} />
+        <SectionHeader title="Risk Indicators" color={theme.red} />
         <Card>
           <InputField label="Cash Deposits" value={cashDeposits} onChangeText={setCashDeposits} />
           <InputField label="Cheque Bounces (#)" value={chequeBounces} onChangeText={setChequeBounces} keyboardType="numeric" />
@@ -399,10 +402,10 @@ export default function BankingScreen() {
             <View style={styles.healthScoreCard}>
               <LinearGradient
                 colors={
-                  result.health_score >= 85 ? [colors.green, '#2E7D32'] :
-                  result.health_score >= 70 ? [colors.primary, colors.primaryDark] :
-                  result.health_score >= 55 ? [colors.yellow, colors.orange] :
-                  [colors.red, '#B71C1C']
+                  result.health_score >= 85 ? [theme.green, '#2E7D32'] :
+                  result.health_score >= 70 ? [theme.primary, theme.primaryDark] :
+                  result.health_score >= 55 ? [theme.yellow, theme.orange] :
+                  [theme.red, '#B71C1C']
                 }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -434,35 +437,35 @@ export default function BankingScreen() {
             </View>
 
             {/* 2. KPI Cards */}
-            <SectionHeader title="Key Banking KPIs" color={colors.primary} />
+            <SectionHeader title="Key Banking KPIs" color={theme.primary} />
             <View style={styles.kpiGrid}>
-              <View style={[styles.kpiCard, { borderLeftColor: colors.green }]}>
+              <View style={[styles.kpiCard, { borderLeftColor: theme.green }]}>
                 <Text style={styles.kpiLabel}>Avg Balance</Text>
-                <Text style={[styles.kpiValue, { color: colors.green }]}>
+                <Text style={[styles.kpiValue, { color: theme.green }]}>
                   ₹{result.input_data.average_balance.toLocaleString('en-IN')}
                 </Text>
               </View>
-              <View style={[styles.kpiCard, { borderLeftColor: colors.primary }]}>
+              <View style={[styles.kpiCard, { borderLeftColor: theme.primary }]}>
                 <Text style={styles.kpiLabel}>Monthly Inflow</Text>
-                <Text style={[styles.kpiValue, { color: colors.primary }]}>
+                <Text style={[styles.kpiValue, { color: theme.primary }]}>
                   ₹{Math.round(result.monthly_inflow).toLocaleString('en-IN')}
                 </Text>
               </View>
-              <View style={[styles.kpiCard, { borderLeftColor: result.monthly_outflow > result.monthly_inflow ? colors.red : colors.orange }]}>
+              <View style={[styles.kpiCard, { borderLeftColor: result.monthly_outflow > result.monthly_inflow ? theme.red : theme.orange }]}>
                 <Text style={styles.kpiLabel}>Monthly Outflow</Text>
-                <Text style={[styles.kpiValue, { color: result.monthly_outflow > result.monthly_inflow ? colors.red : colors.orange }]}>
+                <Text style={[styles.kpiValue, { color: result.monthly_outflow > result.monthly_inflow ? theme.red : theme.orange }]}>
                   ₹{Math.round(result.monthly_outflow).toLocaleString('en-IN')}
                 </Text>
               </View>
-              <View style={[styles.kpiCard, { borderLeftColor: result.input_data.ecs_emi_payments > result.monthly_inflow * 0.4 ? colors.red : colors.yellow }]}>
+              <View style={[styles.kpiCard, { borderLeftColor: result.input_data.ecs_emi_payments > result.monthly_inflow * 0.4 ? theme.red : theme.yellow }]}>
                 <Text style={styles.kpiLabel}>EMI Obligations</Text>
-                <Text style={[styles.kpiValue, { color: result.input_data.ecs_emi_payments > result.monthly_inflow * 0.4 ? colors.red : colors.yellow }]}>
+                <Text style={[styles.kpiValue, { color: result.input_data.ecs_emi_payments > result.monthly_inflow * 0.4 ? theme.red : theme.yellow }]}>
                   ₹{result.input_data.ecs_emi_payments.toLocaleString('en-IN')}
                 </Text>
               </View>
-              <View style={[styles.kpiCard, { borderLeftColor: result.input_data.cheque_bounces > 2 ? colors.red : colors.green }]}>
+              <View style={[styles.kpiCard, { borderLeftColor: result.input_data.cheque_bounces > 2 ? theme.red : theme.green }]}>
                 <Text style={styles.kpiLabel}>Bounce Count</Text>
-                <Text style={[styles.kpiValue, { color: result.input_data.cheque_bounces > 2 ? colors.red : colors.green }]}>
+                <Text style={[styles.kpiValue, { color: result.input_data.cheque_bounces > 2 ? theme.red : theme.green }]}>
                   {result.input_data.cheque_bounces}
                 </Text>
               </View>
@@ -471,15 +474,15 @@ export default function BankingScreen() {
             {/* 3. Cash Flow Chart */}
             {cashFlowData.length > 0 && (
               <>
-                <SectionHeader title="Cash Flow Trend" color={colors.cyan} />
+                <SectionHeader title="Cash Flow Trend" color={theme.cyan} />
                 <Card>
                   <View style={styles.chartLegend}>
                     <View style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: colors.green }]} />
+                      <View style={[styles.legendDot, { backgroundColor: theme.green }]} />
                       <Text style={styles.legendText}>Inflow</Text>
                     </View>
                     <View style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: colors.red }]} />
+                      <View style={[styles.legendDot, { backgroundColor: theme.red }]} />
                       <Text style={styles.legendText}>Outflow</Text>
                     </View>
                   </View>
@@ -497,7 +500,7 @@ export default function BankingScreen() {
                                 styles.chartBarFill,
                                 {
                                   width: `${(item.inflow / maxVal) * 100}%`,
-                                  backgroundColor: colors.green,
+                                  backgroundColor: theme.green,
                                 },
                               ]}
                             />
@@ -511,7 +514,7 @@ export default function BankingScreen() {
                                 styles.chartBarFill,
                                 {
                                   width: `${(item.outflow / maxVal) * 100}%`,
-                                  backgroundColor: colors.red + 'CC',
+                                  backgroundColor: theme.red + 'CC',
                                 },
                               ]}
                             />
@@ -530,11 +533,11 @@ export default function BankingScreen() {
             {/* 4. Risk Indicators */}
             {risksData.length > 0 && (
               <>
-                <SectionHeader title="Risk Indicators" color={colors.red} />
+                <SectionHeader title="Risk Indicators" color={theme.red} />
                 <View style={styles.riskList}>
                   {risksData.map((risk, i) => (
                     <View key={i} style={styles.riskCard}>
-                      <Ionicons name="warning" size={18} color={colors.red} />
+                      <Ionicons name="warning" size={18} color={theme.red} />
                       <Text style={styles.riskText}>{risk}</Text>
                     </View>
                   ))}
@@ -543,14 +546,14 @@ export default function BankingScreen() {
             )}
 
             {/* 5. AI Summary */}
-            <SectionHeader title="AI Analysis Summary" color={colors.purple} />
+            <SectionHeader title="AI Analysis Summary" color={theme.purple} />
             <SummarySection
               summary={result.ai_summary}
               eligibilityStatus={result.eligibility_status}
             />
 
             {/* 6. Insights Cards */}
-            <SectionHeader title="Key Insights" color={colors.primary} />
+            <SectionHeader title="Key Insights" color={theme.primary} />
             <InsightCard items={result.insights} type="info" />
           </>
         )}
@@ -558,7 +561,7 @@ export default function BankingScreen() {
         {/* Credit Risk Assessment */}
         {result && (
           <>
-            <SectionHeader title="Credit Risk Assessment" color={colors.cyan} />
+            <SectionHeader title="Credit Risk Assessment" color={theme.cyan} />
             <Card>
               <View style={styles.gradeRow}>
                 <View>
@@ -623,35 +626,35 @@ export default function BankingScreen() {
                   <View style={styles.scoreBar}>
                     <Text style={styles.scoreBarLabel}>Liquidity</Text>
                     <View style={styles.scoreBarTrack}>
-                      <View style={[styles.scoreBarFill, { width: `${result.liquidity_score}%`, backgroundColor: colors.yellow }]} />
+                      <View style={[styles.scoreBarFill, { width: `${result.liquidity_score}%`, backgroundColor: theme.yellow }]} />
                     </View>
                     <Text style={styles.scoreBarValue}>{result.liquidity_score}%</Text>
                   </View>
                   <View style={styles.scoreBar}>
                     <Text style={styles.scoreBarLabel}>Cash Flow</Text>
                     <View style={styles.scoreBarTrack}>
-                      <View style={[styles.scoreBarFill, { width: `${result.cash_flow_score}%`, backgroundColor: colors.green }]} />
+                      <View style={[styles.scoreBarFill, { width: `${result.cash_flow_score}%`, backgroundColor: theme.green }]} />
                     </View>
                     <Text style={styles.scoreBarValue}>{result.cash_flow_score}%</Text>
                   </View>
                   <View style={styles.scoreBar}>
                     <Text style={styles.scoreBarLabel}>Credit</Text>
                     <View style={styles.scoreBarTrack}>
-                      <View style={[styles.scoreBarFill, { width: `${result.credit_score_component}%`, backgroundColor: colors.primary }]} />
+                      <View style={[styles.scoreBarFill, { width: `${result.credit_score_component}%`, backgroundColor: theme.primary }]} />
                     </View>
                     <Text style={styles.scoreBarValue}>{result.credit_score_component}%</Text>
                   </View>
                   <View style={styles.scoreBar}>
                     <Text style={styles.scoreBarLabel}>Repayment</Text>
                     <View style={styles.scoreBarTrack}>
-                      <View style={[styles.scoreBarFill, { width: `${result.repayment_score}%`, backgroundColor: colors.orange }]} />
+                      <View style={[styles.scoreBarFill, { width: `${result.repayment_score}%`, backgroundColor: theme.orange }]} />
                     </View>
                     <Text style={styles.scoreBarValue}>{result.repayment_score}%</Text>
                   </View>
                   <View style={styles.scoreBar}>
                     <Text style={styles.scoreBarLabel}>Stability</Text>
                     <View style={styles.scoreBarTrack}>
-                      <View style={[styles.scoreBarFill, { width: `${result.stability_score}%`, backgroundColor: colors.cyan }]} />
+                      <View style={[styles.scoreBarFill, { width: `${result.stability_score}%`, backgroundColor: theme.cyan }]} />
                     </View>
                     <Text style={styles.scoreBarValue}>{result.stability_score}%</Text>
                   </View>
@@ -660,13 +663,13 @@ export default function BankingScreen() {
             </Card>
 
             {/* Overall Status */}
-            <Card style={[styles.overallCard, { backgroundColor: result.grade === 'A' || result.grade === 'B' ? colors.green + '15' : colors.red + '15' }]}>
+            <Card style={[styles.overallCard, { backgroundColor: result.grade === 'A' || result.grade === 'B' ? theme.green + '15' : theme.red + '15' }]}>
               <View style={styles.overallHeader}>
                 <View style={styles.gradeBadge}>
                   <Text style={styles.gradeBadgeText}>{result.grade}</Text>
                 </View>
                 <View>
-                  <Text style={[styles.overallTitle, { color: result.grade === 'A' || result.grade === 'B' ? colors.green : colors.red }]}>
+                  <Text style={[styles.overallTitle, { color: result.grade === 'A' || result.grade === 'B' ? theme.green : theme.red }]}>
                     {gradeText[result.grade]?.toUpperCase()}
                   </Text>
                   <Text style={styles.overallSubtitle}>Overall Score: {result.credit_score}/100</Text>
@@ -675,15 +678,15 @@ export default function BankingScreen() {
             </Card>
 
             {/* Strengths */}
-            <SectionHeader title="Strengths" color={colors.green} />
+            <SectionHeader title="Strengths" color={theme.green} />
             <InsightCard items={result.strengths} type="strength" />
 
             {/* Concerns */}
-            <SectionHeader title="Concerns" color={colors.red} />
+            <SectionHeader title="Concerns" color={theme.red} />
             <InsightCard items={result.concerns} type="risk" />
 
             {/* Recommendation */}
-            <SectionHeader title="Credit Officer Recommendation" color={colors.primary} />
+            <SectionHeader title="Credit Officer Recommendation" color={theme.primary} />
             <Card>
               <Text style={styles.recommendationText}>{result.recommendation}</Text>
             </Card>
@@ -694,20 +697,20 @@ export default function BankingScreen() {
         <View style={styles.actionRow}>
           <TouchableOpacity style={styles.actionButton} onPress={handleSaveCase} disabled={!result || saving}>
             {saving ? (
-              <ActivityIndicator size="small" color={colors.primary} />
+              <ActivityIndicator size="small" color={theme.primary} />
             ) : (
               <>
-                <Ionicons name="save-outline" size={18} color={colors.primary} />
+                <Ionicons name="save-outline" size={18} color={theme.primary} />
                 <Text style={styles.actionButtonText}>Save Case</Text>
               </>
             )}
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} onPress={handleExportPDF} disabled={!result || exporting}>
             {exporting ? (
-              <ActivityIndicator size="small" color={colors.primary} />
+              <ActivityIndicator size="small" color={theme.primary} />
             ) : (
               <>
-                <Ionicons name="download-outline" size={18} color={colors.primary} />
+                <Ionicons name="download-outline" size={18} color={theme.primary} />
                 <Text style={styles.actionButtonText}>Export PDF</Text>
               </>
             )}
@@ -715,7 +718,7 @@ export default function BankingScreen() {
         </View>
 
         <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-          <Ionicons name="refresh-outline" size={18} color={colors.textSecondary} />
+          <Ionicons name="refresh-outline" size={18} color={theme.subText} />
           <Text style={styles.resetButtonText}>Start New Analysis</Text>
         </TouchableOpacity>
       </KeyboardAwareScrollView>
@@ -723,10 +726,10 @@ export default function BankingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   scrollContent: {
     padding: 20,
@@ -742,28 +745,28 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.primary + '30',
+    backgroundColor: theme.primary + '30',
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepNumberText: {
-    color: colors.primary,
+    color: theme.primary,
     fontWeight: '700',
     fontSize: 14,
   },
   stepTitle: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 14,
     fontWeight: '600',
   },
   stepSubtitle: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
   },
   uploadButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.inputBackground,
+    backgroundColor: theme.inputBackground,
     borderRadius: 10,
     padding: 14,
     marginBottom: 10,
@@ -773,15 +776,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   uploadButtonTextStyle: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
   },
   uploadButtonTextSelected: {
-    color: colors.text,
+    color: theme.text,
     fontWeight: '500',
   },
   fileSize: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
     marginTop: 2,
   },
@@ -825,7 +828,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   gradeLabel: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
@@ -839,7 +842,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   scoreMax: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 16,
     marginBottom: 8,
   },
@@ -851,14 +854,14 @@ const styles = StyleSheet.create({
   },
   statusItem: {
     width: '48%',
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
   },
   statusLabel: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 10,
     fontWeight: '600',
     letterSpacing: 1,
@@ -875,14 +878,14 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     borderWidth: 6,
-    borderColor: colors.primary,
+    borderColor: theme.primary,
   },
   scorePieValue: {
     fontSize: 18,
     fontWeight: '700',
   },
   scorePieLabel: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 10,
   },
   scoreBreakdown: {
@@ -895,14 +898,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   scoreBarLabel: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 11,
     width: 70,
   },
   scoreBarTrack: {
     flex: 1,
     height: 6,
-    backgroundColor: colors.inputBackground,
+    backgroundColor: theme.inputBackground,
     borderRadius: 3,
   },
   scoreBarFill: {
@@ -910,13 +913,13 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   scoreBarValue: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 11,
     width: 35,
     textAlign: 'right',
   },
   overallCard: {
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
   },
   overallHeader: {
     flexDirection: 'row',
@@ -927,7 +930,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 8,
-    backgroundColor: colors.primary,
+    backgroundColor: theme.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -941,7 +944,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   overallSubtitle: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 12,
   },
   listItem: {
@@ -951,12 +954,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   listText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
     flex: 1,
   },
   recommendationText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
     lineHeight: 20,
   },
@@ -971,15 +974,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
     borderRadius: 10,
     padding: 14,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
     gap: 8,
   },
   actionButtonText: {
-    color: colors.primary,
+    color: theme.primary,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -987,16 +990,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
     borderRadius: 10,
     padding: 14,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
     gap: 8,
     marginBottom: 20,
   },
   resetButtonText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 14,
   },
   // ===== PERFIOS-STYLE STYLES =====
@@ -1067,11 +1070,11 @@ const styles = StyleSheet.create({
   },
   kpiCard: {
     width: '48%',
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
     borderRadius: 10,
     padding: 14,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
     borderLeftWidth: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -1080,7 +1083,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   kpiLabel: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 10,
     fontWeight: '600',
     letterSpacing: 0.5,
@@ -1106,7 +1109,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   legendText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 12,
   },
   chartRow: {
@@ -1116,7 +1119,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   chartMonth: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 11,
     fontWeight: '600',
     width: 28,
@@ -1136,7 +1139,7 @@ const styles = StyleSheet.create({
     minWidth: 4,
   },
   chartBarAmt: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 10,
   },
   riskList: {
@@ -1147,14 +1150,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    backgroundColor: colors.red + '10',
+    backgroundColor: theme.red + '10',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: colors.red + '30',
+    borderColor: theme.red + '30',
     padding: 14,
   },
   riskText: {
-    color: colors.red,
+    color: theme.red,
     fontSize: 13,
     fontWeight: '500',
     flex: 1,
@@ -1178,7 +1181,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   aiSummaryText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
     lineHeight: 21,
   },
@@ -1192,15 +1195,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: colors.primary + '30',
+    borderColor: theme.primary + '30',
   },
   insightText: {
-    color: colors.primaryDark,
+    color: theme.primaryDark,
     fontSize: 12,
     fontWeight: '500',
   },

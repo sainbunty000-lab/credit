@@ -8,7 +8,8 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as DocumentPicker from 'expo-document-picker';
-import { colors } from '../src/theme/colors';
+import { useTheme } from '../src/theme/ThemeContext';
+import { ThemeColors } from '../src/theme/themes';
 import { Card, SectionHeader, InputField, StatusBadge, InsightCard, SummarySection } from '../src/components';
 import {
   analyzeGstItr,
@@ -28,6 +29,8 @@ interface SelectedFile {
 }
 
 export default function GstScreen() {
+  const { theme } = useTheme();
+  const styles = makeStyles(theme);
   const { setGstItrResult } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -221,7 +224,7 @@ export default function GstScreen() {
   const pct = (n: number) => n.toFixed(1) + '%';
 
   const scoreColor = (s: number) =>
-    s >= 75 ? colors.green : s >= 50 ? colors.yellow : colors.red;
+    s >= 75 ? theme.green : s >= 50 ? theme.yellow : theme.red;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -240,7 +243,7 @@ export default function GstScreen() {
 
         {/* Company Name */}
         <Card style={styles.card}>
-          <SectionHeader title="Company Name" color={colors.purple} />
+          <SectionHeader title="Company Name" color={theme.purple} />
           <InputField
             label="Company / Client Name"
             value={companyName}
@@ -251,7 +254,7 @@ export default function GstScreen() {
 
         {/* GSTR-3B Section */}
         <Card style={styles.card}>
-          <SectionHeader title="GST — GSTR-3B Details" color={colors.primary} />
+          <SectionHeader title="GST — GSTR-3B Details" color={theme.primary} />
 
           {/* File upload for GSTR */}
           <TouchableOpacity
@@ -259,8 +262,8 @@ export default function GstScreen() {
             onPress={() => pickFile('gstr')}
             activeOpacity={0.8}
           >
-            <View style={[styles.uploadIcon, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name="document-attach-outline" size={20} color={colors.primary} />
+            <View style={[styles.uploadIcon, { backgroundColor: theme.primaryLight }]}>
+              <Ionicons name="document-attach-outline" size={20} color={theme.primary} />
             </View>
             <View style={styles.uploadInfo}>
               <Text style={styles.uploadLabel}>Upload GSTR-3B Document</Text>
@@ -271,13 +274,13 @@ export default function GstScreen() {
             {gstrFile && (
               <TouchableOpacity
                 onPress={parseGstFile}
-                style={[styles.parseBtn, { backgroundColor: colors.primaryLight }]}
+                style={[styles.parseBtn, { backgroundColor: theme.primaryLight }]}
                 disabled={parsing}
               >
                 {parsing ? (
-                  <ActivityIndicator size="small" color={colors.primary} />
+                  <ActivityIndicator size="small" color={theme.primary} />
                 ) : (
-                  <Text style={[styles.parseBtnText, { color: colors.primary }]}>Parse</Text>
+                  <Text style={[styles.parseBtnText, { color: theme.primary }]}>Parse</Text>
                 )}
               </TouchableOpacity>
             )}
@@ -343,7 +346,7 @@ export default function GstScreen() {
 
         {/* ITR Section */}
         <Card style={styles.card}>
-          <SectionHeader title="ITR — Income Tax Return" color={colors.cyan} />
+          <SectionHeader title="ITR — Income Tax Return" color={theme.cyan} />
 
           {/* File upload for ITR */}
           <TouchableOpacity
@@ -351,8 +354,8 @@ export default function GstScreen() {
             onPress={() => pickFile('itr')}
             activeOpacity={0.8}
           >
-            <View style={[styles.uploadIcon, { backgroundColor: `${colors.cyan}18` }]}>
-              <Ionicons name="receipt-outline" size={20} color={colors.cyan} />
+            <View style={[styles.uploadIcon, { backgroundColor: `${theme.cyan}18` }]}>
+              <Ionicons name="receipt-outline" size={20} color={theme.cyan} />
             </View>
             <View style={styles.uploadInfo}>
               <Text style={styles.uploadLabel}>Upload ITR Document</Text>
@@ -363,13 +366,13 @@ export default function GstScreen() {
             {itrFile && (
               <TouchableOpacity
                 onPress={parseItrFile}
-                style={[styles.parseBtn, { backgroundColor: `${colors.cyan}18` }]}
+                style={[styles.parseBtn, { backgroundColor: `${theme.cyan}18` }]}
                 disabled={parsing}
               >
                 {parsing ? (
-                  <ActivityIndicator size="small" color={colors.cyan} />
+                  <ActivityIndicator size="small" color={theme.cyan} />
                 ) : (
-                  <Text style={[styles.parseBtnText, { color: colors.cyan }]}>Parse</Text>
+                  <Text style={[styles.parseBtnText, { color: theme.cyan }]}>Parse</Text>
                 )}
               </TouchableOpacity>
             )}
@@ -427,7 +430,7 @@ export default function GstScreen() {
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={[colors.purple, '#6A1B9A']}
+            colors={[theme.purple, '#6A1B9A']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.analyzeGradient}
@@ -448,7 +451,7 @@ export default function GstScreen() {
           <>
             {/* Compliance Score */}
             <Card style={styles.card}>
-              <SectionHeader title="Compliance Score" color={colors.purple} />
+              <SectionHeader title="Compliance Score" color={theme.purple} />
               <View style={styles.scoreRow}>
                 <View style={styles.scoreBig}>
                   <Text style={[styles.scoreNumber, { color: scoreColor(result.tax_compliance_score) }]}>
@@ -478,29 +481,29 @@ export default function GstScreen() {
 
             {/* GST Metrics */}
             <Card style={styles.card}>
-              <SectionHeader title="GST Metrics" color={colors.primary} />
+              <SectionHeader title="GST Metrics" color={theme.primary} />
               <View style={styles.metricsGrid}>
                 <View style={styles.metricItem}>
                   <Text style={styles.metricLabel}>Total GST Collected</Text>
-                  <Text style={[styles.metricValue, { color: colors.primary }]}>
+                  <Text style={[styles.metricValue, { color: theme.primary }]}>
                     {fmt(result.total_gst_collected)}
                   </Text>
                 </View>
                 <View style={styles.metricItem}>
                   <Text style={styles.metricLabel}>Avg Monthly Turnover</Text>
-                  <Text style={[styles.metricValue, { color: colors.cyan }]}>
+                  <Text style={[styles.metricValue, { color: theme.cyan }]}>
                     {fmt(result.gst_turnover_monthly)}
                   </Text>
                 </View>
                 <View style={styles.metricItem}>
                   <Text style={styles.metricLabel}>ITC Utilization</Text>
-                  <Text style={[styles.metricValue, { color: result.itc_utilization_rate >= 75 ? colors.green : colors.yellow }]}>
+                  <Text style={[styles.metricValue, { color: result.itc_utilization_rate >= 75 ? theme.green : theme.yellow }]}>
                     {pct(result.itc_utilization_rate)}
                   </Text>
                 </View>
                 <View style={styles.metricItem}>
                   <Text style={styles.metricLabel}>Interest Penalty</Text>
-                  <Text style={[styles.metricValue, { color: (result.input_data.gst.interest_paid || 0) > 0 ? colors.red : colors.green }]}>
+                  <Text style={[styles.metricValue, { color: (result.input_data.gst.interest_paid || 0) > 0 ? theme.red : theme.green }]}>
                     {fmt(result.input_data.gst.interest_paid || 0)}
                   </Text>
                 </View>
@@ -509,29 +512,29 @@ export default function GstScreen() {
 
             {/* ITR Metrics */}
             <Card style={styles.card}>
-              <SectionHeader title="ITR Metrics" color={colors.cyan} />
+              <SectionHeader title="ITR Metrics" color={theme.cyan} />
               <View style={styles.metricsGrid}>
                 <View style={styles.metricItem}>
                   <Text style={styles.metricLabel}>Taxable Income</Text>
-                  <Text style={[styles.metricValue, { color: colors.primary }]}>
+                  <Text style={[styles.metricValue, { color: theme.primary }]}>
                     {fmt(result.input_data.itr.taxable_income)}
                   </Text>
                 </View>
                 <View style={styles.metricItem}>
                   <Text style={styles.metricLabel}>Net Tax Liability</Text>
-                  <Text style={[styles.metricValue, { color: colors.cyan }]}>
+                  <Text style={[styles.metricValue, { color: theme.cyan }]}>
                     {fmt(result.input_data.itr.net_tax_liability)}
                   </Text>
                 </View>
                 <View style={styles.metricItem}>
                   <Text style={styles.metricLabel}>Tax Due</Text>
-                  <Text style={[styles.metricValue, { color: (result.input_data.itr.tax_due || 0) > 0 ? colors.red : colors.green }]}>
+                  <Text style={[styles.metricValue, { color: (result.input_data.itr.tax_due || 0) > 0 ? theme.red : theme.green }]}>
                     {fmt(result.input_data.itr.tax_due || 0)}
                   </Text>
                 </View>
                 <View style={styles.metricItem}>
                   <Text style={styles.metricLabel}>Effective Tax Rate</Text>
-                  <Text style={[styles.metricValue, { color: colors.purple }]}>
+                  <Text style={[styles.metricValue, { color: theme.purple }]}>
                     {pct(result.effective_tax_rate)}
                   </Text>
                 </View>
@@ -540,10 +543,10 @@ export default function GstScreen() {
 
             {/* Assessment */}
             <Card style={styles.card}>
-              <SectionHeader title="Assessment" color={colors.primary} />
+              <SectionHeader title="Assessment" color={theme.primary} />
               {result.assessment.map((item, i) => (
                 <View key={i} style={styles.assessmentRow}>
-                  <Ionicons name="information-circle-outline" size={16} color={colors.primary} />
+                  <Ionicons name="information-circle-outline" size={16} color={theme.primary} />
                   <Text style={styles.assessmentText}>{item}</Text>
                 </View>
               ))}
@@ -552,7 +555,7 @@ export default function GstScreen() {
             {/* Strengths */}
             {result.strengths.length > 0 && (
               <Card style={styles.card}>
-                <SectionHeader title="Strengths" color={colors.green} />
+                <SectionHeader title="Strengths" color={theme.green} />
                 <InsightCard items={result.strengths} type="strength" />
               </Card>
             )}
@@ -560,7 +563,7 @@ export default function GstScreen() {
             {/* Concerns */}
             {result.concerns.length > 0 && (
               <Card style={styles.card}>
-                <SectionHeader title="Concerns" color={colors.red} />
+                <SectionHeader title="Concerns" color={theme.red} />
                 <InsightCard items={result.concerns} type="risk" />
               </Card>
             )}
@@ -575,30 +578,30 @@ export default function GstScreen() {
             {/* Action buttons */}
             <View style={styles.actionRow}>
               <TouchableOpacity
-                style={[styles.actionBtn, { borderColor: colors.purple }]}
+                style={[styles.actionBtn, { borderColor: theme.purple }]}
                 onPress={handleSave}
                 disabled={saving}
               >
                 {saving ? (
-                  <ActivityIndicator size="small" color={colors.purple} />
+                  <ActivityIndicator size="small" color={theme.purple} />
                 ) : (
                   <>
-                    <Ionicons name="save-outline" size={16} color={colors.purple} />
-                    <Text style={[styles.actionBtnText, { color: colors.purple }]}>Save Case</Text>
+                    <Ionicons name="save-outline" size={16} color={theme.purple} />
+                    <Text style={[styles.actionBtnText, { color: theme.purple }]}>Save Case</Text>
                   </>
                 )}
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.actionBtn, { borderColor: colors.cyan }]}
+                style={[styles.actionBtn, { borderColor: theme.cyan }]}
                 onPress={handleExportPDF}
                 disabled={exporting}
               >
                 {exporting ? (
-                  <ActivityIndicator size="small" color={colors.cyan} />
+                  <ActivityIndicator size="small" color={theme.cyan} />
                 ) : (
                   <>
-                    <Ionicons name="download-outline" size={16} color={colors.cyan} />
-                    <Text style={[styles.actionBtnText, { color: colors.cyan }]}>Export PDF</Text>
+                    <Ionicons name="download-outline" size={16} color={theme.cyan} />
+                    <Text style={[styles.actionBtnText, { color: theme.cyan }]}>Export PDF</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -610,10 +613,10 @@ export default function GstScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   scrollContent: {
     padding: 20,
@@ -623,20 +626,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   brandName: {
-    color: colors.purple,
+    color: theme.purple,
     fontSize: 10,
     fontWeight: '600',
     letterSpacing: 2,
     marginBottom: 4,
   },
   title: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 2,
   },
   subtitle: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
   },
   card: {
@@ -645,12 +648,12 @@ const styles = StyleSheet.create({
   uploadRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.inputBackground,
+    backgroundColor: theme.inputBackground,
     borderRadius: 10,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
     borderStyle: 'dashed',
   },
   uploadIcon: {
@@ -665,12 +668,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   uploadLabel: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 13,
     fontWeight: '600',
   },
   uploadSub: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
     marginTop: 2,
   },
@@ -714,7 +717,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   scoreMax: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 18,
     fontWeight: '600',
   },
@@ -728,11 +731,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scoreLabel: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
   },
   scoreValue: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -743,12 +746,12 @@ const styles = StyleSheet.create({
   },
   metricItem: {
     width: '47%',
-    backgroundColor: colors.inputBackground,
+    backgroundColor: theme.inputBackground,
     borderRadius: 10,
     padding: 12,
   },
   metricLabel: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
     marginBottom: 4,
   },
@@ -762,10 +765,10 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: colors.cardBorder,
+    borderBottomColor: theme.cardBorder,
   },
   assessmentText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
     flex: 1,
   },
@@ -784,7 +787,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1.5,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
   },
   actionBtnText: {
     fontSize: 13,

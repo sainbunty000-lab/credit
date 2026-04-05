@@ -11,15 +11,16 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
-import { colors } from '../src/theme/colors';
+import { useTheme } from '../src/theme/ThemeContext';
+import { ThemeColors } from '../src/theme/themes';
 
-const modules = [
+const moduleDefinitions = [
   {
     id: 'dashboard',
     title: 'Dashboard',
     subtitle: 'ANALYTICS',
     icon: 'stats-chart-outline' as const,
-    color: colors.primary,
+    colorKey: 'primary' as const,
     route: '/dashboard',
     description: 'KPIs, charts & overview',
   },
@@ -28,7 +29,7 @@ const modules = [
     title: 'Working Capital',
     subtitle: 'CORE MODULE',
     icon: 'bar-chart-outline' as const,
-    color: colors.yellow,
+    colorKey: 'yellow' as const,
     route: '/wc',
     description: 'WC analysis & ratios',
   },
@@ -37,7 +38,7 @@ const modules = [
     title: 'Banking Performance',
     subtitle: 'CORE MODULE',
     icon: 'business-outline' as const,
-    color: colors.green,
+    colorKey: 'green' as const,
     route: '/banking',
     description: 'Credit & liquidity scores',
   },
@@ -46,7 +47,7 @@ const modules = [
     title: 'Multi-Year Analysis',
     subtitle: 'ADVANCED',
     icon: 'trending-up-outline' as const,
-    color: colors.cyan,
+    colorKey: 'cyan' as const,
     route: '/trend',
     description: 'Historical trend analysis',
   },
@@ -55,7 +56,7 @@ const modules = [
     title: 'GST & ITR',
     subtitle: 'TAX',
     icon: 'shield-checkmark-outline' as const,
-    color: colors.purple,
+    colorKey: 'purple' as const,
     route: '/gst',
     description: 'Tax compliance & ITR check',
   },
@@ -64,11 +65,170 @@ const modules = [
     title: 'Saved Cases',
     subtitle: 'RECORDS',
     icon: 'folder-outline' as const,
-    color: colors.orange,
+    colorKey: 'orange' as const,
     route: '/cases',
     description: 'View past analyses',
   },
 ] as const;
+
+function makeStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    scrollContent: {
+      padding: 20,
+      paddingBottom: 32,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: 20,
+    },
+    headerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      gap: 10,
+    },
+    logo: {
+      width: 44,
+      height: 44,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: theme.cardBorder,
+    },
+    brandName: {
+      color: theme.primary,
+      fontSize: 9,
+      fontWeight: '800',
+      letterSpacing: 1.5,
+      marginBottom: 2,
+    },
+    title: {
+      color: theme.text,
+      fontSize: 28,
+      fontWeight: '800',
+      marginBottom: 4,
+    },
+    subtitle: {
+      color: theme.subText,
+      fontSize: 14,
+    },
+    headerBadge: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: theme.primaryLight,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    statsRow: {
+      flexDirection: 'row',
+      gap: 8,
+      marginBottom: 24,
+      flexWrap: 'wrap',
+    },
+    statBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: theme.primary,
+      borderRadius: 20,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+    },
+    statText: {
+      color: theme.subText,
+      fontSize: 11,
+      fontWeight: '500',
+    },
+    modulesGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 12,
+      marginBottom: 24,
+    },
+    moduleCardWrapper: {
+      width: '47.5%',
+    },
+    moduleCardFull: {
+      width: '100%',
+    },
+    moduleCard: {
+      backgroundColor: theme.card,
+      borderRadius: 14,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: theme.cardBorder,
+      flex: 1,
+    },
+    moduleBadge: {
+      borderWidth: 1,
+      borderRadius: 4,
+      paddingHorizontal: 7,
+      paddingVertical: 2,
+      alignSelf: 'flex-start',
+      marginBottom: 12,
+    },
+    moduleBadgeText: {
+      fontSize: 9,
+      fontWeight: '700',
+      letterSpacing: 1,
+    },
+    moduleIconContainer: {
+      width: 44,
+      height: 44,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 10,
+    },
+    moduleTitle: {
+      color: theme.text,
+      fontSize: 15,
+      fontWeight: '700',
+      marginBottom: 4,
+    },
+    moduleDesc: {
+      color: theme.subText,
+      fontSize: 11,
+      marginBottom: 10,
+    },
+    openRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    openText: {
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    startButton: {
+      borderRadius: 14,
+      overflow: 'hidden',
+      marginBottom: 20,
+    },
+    startButtonGradient: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 16,
+      gap: 10,
+    },
+    startButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '700',
+      flex: 1,
+      textAlign: 'center',
+    },
+  });
+}
 
 function AnimatedModuleCard({
   module,
@@ -76,11 +236,15 @@ function AnimatedModuleCard({
   isLastOdd,
   onPress,
 }: {
-  module: (typeof modules)[number];
+  module: (typeof moduleDefinitions)[number];
   index: number;
   isLastOdd: boolean;
   onPress: () => void;
 }) {
+  const { theme } = useTheme();
+  const styles = makeStyles(theme);
+  const moduleColor = theme[module.colorKey];
+
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(24);
 
@@ -102,17 +266,17 @@ function AnimatedModuleCard({
         onPress={onPress}
         activeOpacity={0.8}
       >
-        <View style={[styles.moduleBadge, { borderColor: module.color }]}>
-          <Text style={[styles.moduleBadgeText, { color: module.color }]}>{module.subtitle}</Text>
+        <View style={[styles.moduleBadge, { borderColor: moduleColor }]}>
+          <Text style={[styles.moduleBadgeText, { color: moduleColor }]}>{module.subtitle}</Text>
         </View>
-        <View style={[styles.moduleIconContainer, { backgroundColor: `${module.color}18` }]}>
-          <Ionicons name={module.icon} size={24} color={module.color} />
+        <View style={[styles.moduleIconContainer, { backgroundColor: `${moduleColor}18` }]}>
+          <Ionicons name={module.icon} size={24} color={moduleColor} />
         </View>
         <Text style={styles.moduleTitle}>{module.title}</Text>
         <Text style={styles.moduleDesc}>{module.description}</Text>
         <View style={styles.openRow}>
-          <Text style={[styles.openText, { color: module.color }]}>Open</Text>
-          <Ionicons name="arrow-forward" size={13} color={module.color} />
+          <Text style={[styles.openText, { color: moduleColor }]}>Open</Text>
+          <Ionicons name="arrow-forward" size={13} color={moduleColor} />
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -121,6 +285,8 @@ function AnimatedModuleCard({
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const styles = makeStyles(theme);
 
   const headerOpacity = useSharedValue(0);
   const headerTranslateY = useSharedValue(-12);
@@ -148,30 +314,30 @@ export default function HomeScreen() {
             </View>
           </View>
           <View style={styles.headerBadge}>
-            <Ionicons name="shield-checkmark-outline" size={20} color={colors.primary} />
+            <Ionicons name="shield-checkmark-outline" size={20} color={theme.primary} />
           </View>
         </Animated.View>
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
           <View style={styles.statBadge}>
-            <Ionicons name="flash-outline" size={13} color={colors.primary} />
+            <Ionicons name="flash-outline" size={13} color={theme.primary} />
             <Text style={styles.statText}>AI-Powered OCR</Text>
           </View>
-          <View style={[styles.statBadge, { borderColor: colors.green }]}>
-            <Ionicons name="checkmark-circle-outline" size={13} color={colors.green} />
+          <View style={[styles.statBadge, { borderColor: theme.green }]}>
+            <Ionicons name="checkmark-circle-outline" size={13} color={theme.green} />
             <Text style={styles.statText}>100% Accurate</Text>
           </View>
-          <View style={[styles.statBadge, { borderColor: colors.cyan }]}>
-            <Ionicons name="cloud-outline" size={13} color={colors.cyan} />
+          <View style={[styles.statBadge, { borderColor: theme.cyan }]}>
+            <Ionicons name="cloud-outline" size={13} color={theme.cyan} />
             <Text style={styles.statText}>Cloud Sync</Text>
           </View>
         </View>
 
         {/* Module Cards Grid */}
         <View style={styles.modulesGrid}>
-          {modules.map((module, index) => {
-            const isLastOdd = modules.length % 2 !== 0 && index === modules.length - 1;
+          {moduleDefinitions.map((module, index) => {
+            const isLastOdd = moduleDefinitions.length % 2 !== 0 && index === moduleDefinitions.length - 1;
             return (
               <AnimatedModuleCard
                 key={module.id}
@@ -191,7 +357,7 @@ export default function HomeScreen() {
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={[colors.gradientStart, colors.gradientEnd]}
+            colors={[theme.gradient[0], theme.gradient[1]]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.startButtonGradient}
@@ -205,160 +371,3 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 32,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 10,
-  },
-  logo: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  brandName: {
-    color: colors.primary,
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 1.5,
-    marginBottom: 2,
-  },
-  title: {
-    color: colors.text,
-    fontSize: 28,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  subtitle: {
-    color: colors.textSecondary,
-    fontSize: 14,
-  },
-  headerBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 24,
-    flexWrap: 'wrap',
-  },
-  statBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: colors.cardBackground,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  statText: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  modulesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
-  },
-  moduleCardWrapper: {
-    width: '47.5%',
-  },
-  moduleCardFull: {
-    width: '100%',
-  },
-  moduleCard: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    flex: 1,
-  },
-  moduleBadge: {
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    alignSelf: 'flex-start',
-    marginBottom: 12,
-  },
-  moduleBadgeText: {
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  moduleIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  moduleTitle: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  moduleDesc: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    marginBottom: 10,
-  },
-  openRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  openText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  startButton: {
-    borderRadius: 14,
-    overflow: 'hidden',
-    marginBottom: 20,
-  },
-  startButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 10,
-  },
-  startButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-    flex: 1,
-    textAlign: 'center',
-  },
-});

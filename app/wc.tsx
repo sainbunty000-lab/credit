@@ -5,7 +5,8 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as DocumentPicker from 'expo-document-picker';
-import { colors } from '../src/theme/colors';
+import { useTheme } from '../src/theme/ThemeContext';
+import { ThemeColors } from '../src/theme/themes';
 import { Card, SectionHeader, InputField, MetricCard } from '../src/components';
 import { analyzeWorkingCapital, saveCase, parseDocument, exportPDF, getMimeTypeFromExtension } from '../src/api';
 import { WorkingCapitalResult } from '../src/types';
@@ -19,6 +20,8 @@ interface SelectedFile {
 }
 
 export default function WCScreen() {
+  const { theme } = useTheme();
+  const styles = makeStyles(theme);
   const { setWCResult } = useAppStore();
   const [showInputs, setShowInputs] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -320,13 +323,13 @@ export default function WCScreen() {
   };
 
   const getStatusColor = (ratio: number, benchmark: number) => {
-    return ratio >= benchmark ? colors.green : colors.red;
+    return ratio >= benchmark ? theme.green : theme.red;
   };
 
   const getRiskColor = (color: string) => {
-    if (color === 'green') return colors.green;
-    if (color === 'red') return colors.red;
-    return colors.yellow; // amber
+    if (color === 'green') return theme.green;
+    if (color === 'red') return theme.red;
+    return theme.yellow; // amber
   };
 
   const formatFileSize = (bytes?: number) => {
@@ -366,7 +369,7 @@ export default function WCScreen() {
             <Ionicons 
               name={balanceSheetFile ? "checkmark-circle" : "cloud-upload-outline"} 
               size={20} 
-              color={balanceSheetFile ? colors.green : colors.primary} 
+              color={balanceSheetFile ? theme.green : theme.primary} 
             />
             <View style={styles.uploadTextContainer}>
               <Text style={[styles.uploadButtonText, balanceSheetFile && styles.uploadButtonTextSelected]}>
@@ -376,14 +379,14 @@ export default function WCScreen() {
                 <Text style={styles.fileSize}>{formatFileSize(balanceSheetFile.size)}</Text>
               )}
             </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.uploadButton} onPress={pickPLStatement}>
             <Ionicons 
               name={plFile ? "checkmark-circle" : "cloud-upload-outline"} 
               size={20} 
-              color={plFile ? colors.green : colors.primary} 
+              color={plFile ? theme.green : theme.primary} 
             />
             <View style={styles.uploadTextContainer}>
               <Text style={[styles.uploadButtonText, plFile && styles.uploadButtonTextSelected]}>
@@ -393,7 +396,7 @@ export default function WCScreen() {
                 <Text style={styles.fileSize}>{formatFileSize(plFile.size)}</Text>
               )}
             </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
           </TouchableOpacity>
 
           {/* Parse Documents Button */}
@@ -404,7 +407,7 @@ export default function WCScreen() {
               disabled={parsing}
             >
               <LinearGradient
-                colors={[colors.yellow, colors.orange]}
+                colors={[theme.yellow, theme.orange]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.parseGradient}
@@ -443,7 +446,7 @@ export default function WCScreen() {
             disabled={loading}
           >
             <LinearGradient
-              colors={[colors.gradientStart, colors.gradientEnd]}
+              colors={[theme.gradient[0], theme.gradient[1]]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.calculateGradient}
@@ -478,7 +481,7 @@ export default function WCScreen() {
         {/* Manual Inputs */}
         {showInputs && (
           <>
-            <SectionHeader title="Balance Sheet Values" color={colors.yellow} />
+            <SectionHeader title="Balance Sheet Values" color={theme.yellow} />
             <Card>
               <InputField label="Current Assets" value={currentAssets} onChangeText={setCurrentAssets} />
               <InputField label="Current Liabilities" value={currentLiabilities} onChangeText={setCurrentLiabilities} />
@@ -488,7 +491,7 @@ export default function WCScreen() {
               <InputField label="Cash & Bank Balance" value={cashBank} onChangeText={setCashBank} />
             </Card>
 
-            <SectionHeader title="Profit & Loss Values" color={colors.green} />
+            <SectionHeader title="Profit & Loss Values" color={theme.green} />
             <Card>
               <InputField label="Revenue / Sales" value={revenue} onChangeText={setRevenue} />
               <InputField label="Cost of Goods Sold" value={cogs} onChangeText={setCogs} />
@@ -528,17 +531,17 @@ export default function WCScreen() {
           <MetricCard
             value={`${(result?.current_ratio || 0).toFixed(2)}x`}
             label="Current Ratio"
-            color={result ? getStatusColor(result.current_ratio, 1.33) : colors.yellow}
+            color={result ? getStatusColor(result.current_ratio, 1.33) : theme.yellow}
           />
           <MetricCard
             value={`${(result?.quick_ratio || 0).toFixed(2)}x`}
             label="Quick Ratio"
-            color={result ? getStatusColor(result.quick_ratio, 1.0) : colors.primary}
+            color={result ? getStatusColor(result.quick_ratio, 1.0) : theme.primary}
           />
           <MetricCard
             value={`${(result?.inventory_turnover || 0).toFixed(2)}x`}
             label="Inv. Turnover"
-            color={colors.orange}
+            color={theme.orange}
           />
         </View>
 
@@ -546,17 +549,17 @@ export default function WCScreen() {
           <MetricCard
             value={`${result?.debtor_days || 0} d`}
             label="Debtor Days"
-            color={colors.yellow}
+            color={theme.yellow}
           />
           <MetricCard
             value={`${result?.creditor_days || 0} d`}
             label="Creditor Days"
-            color={colors.primary}
+            color={theme.primary}
           />
           <MetricCard
             value={`${result?.wc_cycle || 0} d`}
             label="WC Cycle"
-            color={colors.orange}
+            color={theme.orange}
           />
         </View>
 
@@ -564,25 +567,25 @@ export default function WCScreen() {
           <MetricCard
             value={`${result?.inventory_days || 0} d`}
             label="Inventory Days"
-            color={colors.cyan}
+            color={theme.cyan}
           />
           <MetricCard
             value={`₹${(result?.mpbf || 0).toLocaleString('en-IN')}`}
             label="MPBF"
-            color={colors.green}
+            color={theme.green}
           />
         </View>
 
         <View style={styles.metricsRow}>
-          <View style={[styles.marginCard, { borderLeftColor: colors.green }]}>
+          <View style={[styles.marginCard, { borderLeftColor: theme.green }]}>
             <Text style={styles.marginLabel}>GROSS MARGIN</Text>
-            <Text style={[styles.marginValue, { color: colors.green }]}>
+            <Text style={[styles.marginValue, { color: theme.green }]}>
               {(result?.gross_margin || 100).toFixed(1)}%
             </Text>
           </View>
-          <View style={[styles.marginCard, { borderLeftColor: colors.yellow }]}>
+          <View style={[styles.marginCard, { borderLeftColor: theme.yellow }]}>
             <Text style={styles.marginLabel}>NET MARGIN</Text>
-            <Text style={[styles.marginValue, { color: colors.yellow }]}>
+            <Text style={[styles.marginValue, { color: theme.yellow }]}>
               {(result?.net_margin || 0).toFixed(1)}%
             </Text>
           </View>
@@ -627,9 +630,9 @@ export default function WCScreen() {
             <Ionicons
               name={result?.eligible ? 'checkmark-circle' : 'close-circle'}
               size={20}
-              color={result?.eligible ? colors.green : colors.red}
+              color={result?.eligible ? theme.green : theme.red}
             />
-            <Text style={[styles.statusText, { color: result?.eligible ? colors.green : colors.red }]}>
+            <Text style={[styles.statusText, { color: result?.eligible ? theme.green : theme.red }]}>
               {result?.eligible ? 'ELIGIBLE' : 'NOT ELIGIBLE'}
             </Text>
           </View>
@@ -645,7 +648,7 @@ export default function WCScreen() {
                 <Ionicons
                   name={point.includes('meets') || point.includes('healthy') || point.includes('efficient') ? 'checkmark-circle' : 'alert-circle'}
                   size={16}
-                  color={point.includes('meets') || point.includes('healthy') || point.includes('efficient') ? colors.green : colors.yellow}
+                  color={point.includes('meets') || point.includes('healthy') || point.includes('efficient') ? theme.green : theme.yellow}
                 />
                 <Text style={styles.assessmentText}>{point}</Text>
               </View>
@@ -656,10 +659,10 @@ export default function WCScreen() {
         {/* Advisory Suggestions */}
         {result?.suggestions && result.suggestions.length > 0 && (
           <Card>
-            <SectionHeader title="Advisory Suggestions" color={colors.orange} />
+            <SectionHeader title="Advisory Suggestions" color={theme.orange} />
             {result.suggestions.map((suggestion, idx) => (
               <View key={idx} style={styles.assessmentRow}>
-                <Ionicons name="information-circle-outline" size={16} color={colors.orange} />
+                <Ionicons name="information-circle-outline" size={16} color={theme.orange} />
                 <Text style={styles.assessmentText}>{suggestion}</Text>
               </View>
             ))}
@@ -669,7 +672,7 @@ export default function WCScreen() {
         {/* Recommendation */}
         {result?.recommendation && (
           <Card>
-            <SectionHeader title="Recommendation" color={colors.primary} />
+            <SectionHeader title="Recommendation" color={theme.primary} />
             <Text style={styles.recommendationText}>{result.recommendation}</Text>
           </Card>
         )}
@@ -678,20 +681,20 @@ export default function WCScreen() {
         <View style={styles.actionRow}>
           <TouchableOpacity style={styles.actionButton} onPress={handleSaveCase} disabled={!result || saving}>
             {saving ? (
-              <ActivityIndicator size="small" color={colors.primary} />
+              <ActivityIndicator size="small" color={theme.primary} />
             ) : (
               <>
-                <Ionicons name="save-outline" size={18} color={colors.primary} />
+                <Ionicons name="save-outline" size={18} color={theme.primary} />
                 <Text style={styles.actionButtonText}>Save Case</Text>
               </>
             )}
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} onPress={handleExportPDF} disabled={!result || exporting}>
             {exporting ? (
-              <ActivityIndicator size="small" color={colors.primary} />
+              <ActivityIndicator size="small" color={theme.primary} />
             ) : (
               <>
-                <Ionicons name="download-outline" size={18} color={colors.primary} />
+                <Ionicons name="download-outline" size={18} color={theme.primary} />
                 <Text style={styles.actionButtonText}>Export PDF</Text>
               </>
             )}
@@ -699,7 +702,7 @@ export default function WCScreen() {
         </View>
 
         <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-          <Ionicons name="refresh-outline" size={18} color={colors.textSecondary} />
+          <Ionicons name="refresh-outline" size={18} color={theme.subText} />
           <Text style={styles.resetButtonText}>Start New Analysis</Text>
         </TouchableOpacity>
       </KeyboardAwareScrollView>
@@ -707,10 +710,10 @@ export default function WCScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   scrollContent: {
     padding: 20,
@@ -720,20 +723,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   brandName: {
-    color: colors.primary,
+    color: theme.primary,
     fontSize: 10,
     fontWeight: '600',
     letterSpacing: 2,
     marginBottom: 4,
   },
   title: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 2,
   },
   subtitle: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
   },
   stepHeader: {
@@ -746,28 +749,28 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.primary + '30',
+    backgroundColor: theme.primary + '30',
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepNumberText: {
-    color: colors.primary,
+    color: theme.primary,
     fontWeight: '700',
     fontSize: 14,
   },
   stepTitle: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 14,
     fontWeight: '600',
   },
   stepSubtitle: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
   },
   uploadButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.inputBackground,
+    backgroundColor: theme.inputBackground,
     borderRadius: 10,
     padding: 14,
     marginBottom: 10,
@@ -777,15 +780,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   uploadButtonText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
   },
   uploadButtonTextSelected: {
-    color: colors.text,
+    color: theme.text,
     fontWeight: '500',
   },
   fileSize: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
     marginTop: 2,
   },
@@ -827,7 +830,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   uploadHint: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
     textAlign: 'center',
     marginBottom: 8,
@@ -837,7 +840,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   toggleText: {
-    color: colors.yellow,
+    color: theme.yellow,
     fontSize: 13,
   },
   metricsRow: {
@@ -847,15 +850,15 @@ const styles = StyleSheet.create({
   },
   marginCard: {
     flex: 1,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
     borderRadius: 8,
     padding: 14,
     borderLeftWidth: 3,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
   },
   marginLabel: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 10,
     fontWeight: '600',
     letterSpacing: 1,
@@ -869,26 +872,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   eligibilityLabel: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 11,
     letterSpacing: 1,
   },
   eligibilityAmount: {
-    color: colors.cyan,
+    color: theme.cyan,
     fontSize: 32,
     fontWeight: '700',
   },
   nwcLabel: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 12,
   },
   eligibleCard: {
-    backgroundColor: colors.green + '15',
-    borderColor: colors.green + '40',
+    backgroundColor: theme.green + '15',
+    borderColor: theme.green + '40',
   },
   notEligibleCard: {
-    backgroundColor: colors.red + '15',
-    borderColor: colors.red + '40',
+    backgroundColor: theme.red + '15',
+    borderColor: theme.red + '40',
   },
   statusRow: {
     flexDirection: 'row',
@@ -900,12 +903,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   statusSubtext: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 11,
     marginTop: 2,
   },
   wcAmount: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 18,
     fontWeight: '600',
     position: 'absolute',
@@ -919,12 +922,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   assessmentText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
     flex: 1,
   },
   recommendationText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
     lineHeight: 20,
   },
@@ -938,15 +941,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
     borderRadius: 10,
     padding: 14,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
     gap: 8,
   },
   actionButtonText: {
-    color: colors.primary,
+    color: theme.primary,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -954,20 +957,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
     borderRadius: 10,
     padding: 14,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
     gap: 8,
     marginBottom: 20,
   },
   resetButtonText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 14,
   },
   riskTitle: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 13,
     fontWeight: '600',
     marginBottom: 12,
@@ -982,7 +985,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   riskLabel: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 10,
     fontWeight: '600',
     textTransform: 'uppercase',

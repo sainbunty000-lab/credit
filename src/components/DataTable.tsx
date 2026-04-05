@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { ThemeColors } from '../theme/themes';
 
 export interface TableRow {
   label: string;
@@ -14,7 +15,66 @@ interface DataTableProps {
   title?: string;
 }
 
+function makeStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      borderRadius: 10,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: theme.cardBorder,
+      marginBottom: 12,
+    },
+    tableTitle: {
+      color: theme.text,
+      fontSize: 13,
+      fontWeight: '700',
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      backgroundColor: theme.primaryLight,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.cardBorder,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 14,
+      paddingVertical: 11,
+      backgroundColor: theme.card,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.cardBorder,
+    },
+    rowAlt: {
+      backgroundColor: theme.tableRowAlt,
+    },
+    rowLast: {
+      borderBottomWidth: 0,
+    },
+    label: {
+      color: theme.subText,
+      fontSize: 13,
+      flex: 1,
+    },
+    labelBold: {
+      color: theme.text,
+      fontWeight: '700',
+    },
+    value: {
+      color: theme.text,
+      fontSize: 13,
+      fontWeight: '600',
+      textAlign: 'right',
+    },
+    valueBold: {
+      fontSize: 14,
+      fontWeight: '700',
+    },
+  });
+}
+
 export const DataTable: React.FC<DataTableProps> = ({ rows, title }) => {
+  const { theme } = useTheme();
+  const styles = makeStyles(theme);
   return (
     <View style={styles.container}>
       {title ? <Text style={styles.tableTitle}>{title}</Text> : null}
@@ -36,58 +96,3 @@ export const DataTable: React.FC<DataTableProps> = ({ rows, title }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    borderRadius: 10,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    marginBottom: 12,
-  },
-  tableTitle: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: '700',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: colors.primaryLight,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.cardBorder,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    backgroundColor: colors.cardBackground,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.cardBorder,
-  },
-  rowAlt: {
-    backgroundColor: '#FAFFFE',
-  },
-  rowLast: {
-    borderBottomWidth: 0,
-  },
-  label: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    flex: 1,
-  },
-  labelBold: {
-    color: colors.text,
-    fontWeight: '700',
-  },
-  value: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: '600',
-    textAlign: 'right',
-  },
-  valueBold: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-});
