@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { EligibilityBadge } from './EligibilityBadge';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { ThemeColors } from '../theme/themes';
 
 interface SummarySectionProps {
   summary?: string | null;
@@ -10,7 +11,47 @@ interface SummarySectionProps {
   title?: string;
 }
 
+function makeStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      backgroundColor: theme.card,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: theme.cardBorder,
+      padding: 16,
+      marginBottom: 12,
+    },
+    sectionTitle: {
+      color: theme.subText,
+      fontSize: 11,
+      fontWeight: '700',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      marginBottom: 10,
+    },
+    badgeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      marginBottom: 12,
+    },
+    confidence: {
+      color: theme.subText,
+      fontSize: 12,
+      fontWeight: '500',
+    },
+    summaryText: {
+      color: theme.text,
+      fontSize: 13,
+      lineHeight: 21,
+    },
+  });
+}
+
 export function SummarySection({ summary, eligibilityStatus, confidence, title = 'AI Analysis Summary' }: SummarySectionProps) {
+  const { theme } = useTheme();
+  const styles = makeStyles(theme);
+
   if (!summary && !eligibilityStatus) return null;
 
   return (
@@ -28,38 +69,3 @@ export function SummarySection({ summary, eligibilityStatus, confidence, title =
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    padding: 16,
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: 10,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  confidence: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  summaryText: {
-    color: colors.text,
-    fontSize: 13,
-    lineHeight: 21,
-  },
-});

@@ -1,7 +1,8 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { ThemeColors } from '../theme/themes';
 
 interface ButtonProps {
   title: string;
@@ -14,6 +15,59 @@ interface ButtonProps {
   icon?: React.ReactNode;
 }
 
+function makeStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+    buttonContainer: {
+      borderRadius: 12,
+      overflow: 'hidden',
+    },
+    gradient: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 14,
+      paddingHorizontal: 24,
+      gap: 8,
+    },
+    button: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 14,
+      paddingHorizontal: 24,
+      borderRadius: 12,
+      gap: 8,
+    },
+    secondaryButton: {
+      backgroundColor: theme.inputBackground,
+      borderWidth: 1,
+      borderColor: theme.cardBorder,
+    },
+    outlineButton: {
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      borderColor: theme.primary,
+    },
+    dangerButton: {
+      backgroundColor: theme.error,
+    },
+    disabledButton: {
+      opacity: 0.5,
+    },
+    buttonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    outlineText: {
+      color: theme.primary,
+    },
+    secondaryText: {
+      color: theme.subText,
+    },
+  });
+}
+
 export const Button: React.FC<ButtonProps> = ({
   title,
   onPress,
@@ -24,6 +78,8 @@ export const Button: React.FC<ButtonProps> = ({
   textStyle,
   icon,
 }) => {
+  const { theme } = useTheme();
+  const styles = makeStyles(theme);
   const isDisabled = disabled || loading;
 
   if (variant === 'primary') {
@@ -35,7 +91,7 @@ export const Button: React.FC<ButtonProps> = ({
         activeOpacity={0.8}
       >
         <LinearGradient
-          colors={isDisabled ? ['#A5D6A7', '#81C784'] : [colors.gradientStart, colors.gradientEnd]}
+          colors={isDisabled ? ['#A5D6A7', '#81C784'] : [theme.gradient[0], theme.gradient[1]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.gradient}
@@ -68,7 +124,7 @@ export const Button: React.FC<ButtonProps> = ({
       activeOpacity={0.8}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'outline' ? colors.primary : '#fff'} />
+        <ActivityIndicator color={variant === 'outline' ? theme.primary : '#fff'} />
       ) : (
         <>
           {icon}
@@ -87,54 +143,3 @@ export const Button: React.FC<ButtonProps> = ({
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  buttonContainer: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  gradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    gap: 8,
-  },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    gap: 8,
-  },
-  secondaryButton: {
-    backgroundColor: colors.inputBackground,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  outlineButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-  },
-  dangerButton: {
-    backgroundColor: colors.error,
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  outlineText: {
-    color: colors.primary,
-  },
-  secondaryText: {
-    color: colors.textSecondary,
-  },
-});

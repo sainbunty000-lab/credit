@@ -2,13 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../src/theme/colors';
+import { useTheme } from '../src/theme/ThemeContext';
+import { ThemeColors } from '../src/theme/themes';
 import { Card, SectionHeader, StatusBadge } from '../src/components';
 import { getCases, deleteCase } from '../src/api';
 import { Case } from '../src/types';
 import { useAppStore } from '../src/store';
 
 export default function CasesScreen() {
+  const { theme } = useTheme();
+  const styles = makeStyles(theme);
   const { cases, setCases, removeCase } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -76,15 +79,15 @@ export default function CasesScreen() {
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'working_capital':
-        return colors.yellow;
+        return theme.yellow;
       case 'banking':
-        return colors.green;
+        return theme.green;
       case 'multi_year':
-        return colors.purple;
+        return theme.purple;
       case 'gst_itr':
-        return colors.cyan;
+        return theme.cyan;
       default:
-        return colors.primary;
+        return theme.primary;
     }
   };
 
@@ -211,7 +214,7 @@ export default function CasesScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={theme.primary} />
           <Text style={styles.loadingText}>Loading cases...</Text>
         </View>
       </SafeAreaView>
@@ -223,7 +226,7 @@ export default function CasesScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
       >
         {/* Header */}
@@ -236,28 +239,28 @@ export default function CasesScreen() {
         {/* Stats */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Ionicons name="bar-chart-outline" size={20} color={colors.yellow} />
+            <Ionicons name="bar-chart-outline" size={20} color={theme.yellow} />
             <Text style={styles.statValue}>
               {cases.filter((c) => c.analysis_type === 'working_capital').length}
             </Text>
             <Text style={styles.statLabel}>WC</Text>
           </View>
           <View style={styles.statCard}>
-            <Ionicons name="business-outline" size={20} color={colors.green} />
+            <Ionicons name="business-outline" size={20} color={theme.green} />
             <Text style={styles.statValue}>
               {cases.filter((c) => c.analysis_type === 'banking').length}
             </Text>
             <Text style={styles.statLabel}>Banking</Text>
           </View>
           <View style={styles.statCard}>
-            <Ionicons name="trending-up-outline" size={20} color={colors.purple} />
+            <Ionicons name="trending-up-outline" size={20} color={theme.purple} />
             <Text style={styles.statValue}>
               {cases.filter((c) => c.analysis_type === 'multi_year').length}
             </Text>
             <Text style={styles.statLabel}>Trend</Text>
           </View>
           <View style={styles.statCard}>
-            <Ionicons name="shield-checkmark-outline" size={20} color={colors.cyan} />
+            <Ionicons name="shield-checkmark-outline" size={20} color={theme.cyan} />
             <Text style={styles.statValue}>
               {cases.filter((c) => c.analysis_type === 'gst_itr').length}
             </Text>
@@ -268,13 +271,13 @@ export default function CasesScreen() {
         {/* Cases List */}
         {cases.length === 0 ? (
           <Card style={styles.emptyCard}>
-            <Ionicons name="folder-open-outline" size={48} color={colors.textMuted} />
+            <Ionicons name="folder-open-outline" size={48} color={theme.textMuted} />
             <Text style={styles.emptyTitle}>No saved cases yet</Text>
             <Text style={styles.emptyText}>Complete an analysis and save it to see it here</Text>
           </Card>
         ) : (
           <>
-            <SectionHeader title="All Cases" color={colors.primary} />
+            <SectionHeader title="All Cases" color={theme.primary} />
             {cases.map((caseItem) => (
               <TouchableOpacity
                 key={caseItem.id}
@@ -299,12 +302,12 @@ export default function CasesScreen() {
                   </View>
                   <View style={styles.caseActions}>
                     <TouchableOpacity onPress={() => handleDelete(caseItem.id)} style={styles.deleteButton}>
-                      <Ionicons name="trash-outline" size={18} color={colors.red} />
+                      <Ionicons name="trash-outline" size={18} color={theme.red} />
                     </TouchableOpacity>
                     <Ionicons
                       name={expandedCase === caseItem.id ? 'chevron-up' : 'chevron-down'}
                       size={18}
-                      color={colors.textMuted}
+                      color={theme.textMuted}
                     />
                   </View>
                 </View>
@@ -318,10 +321,10 @@ export default function CasesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   scrollContent: {
     padding: 20,
@@ -333,27 +336,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   loadingText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     marginTop: 12,
   },
   header: {
     marginBottom: 20,
   },
   brandName: {
-    color: colors.orange,
+    color: theme.orange,
     fontSize: 10,
     fontWeight: '600',
     letterSpacing: 2,
     marginBottom: 4,
   },
   title: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 2,
   },
   subtitle: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
   },
   statsRow: {
@@ -363,21 +366,21 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
     borderRadius: 10,
     padding: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
   },
   statValue: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 22,
     fontWeight: '700',
     marginTop: 6,
   },
   statLabel: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
     marginTop: 2,
   },
@@ -386,22 +389,22 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   emptyTitle: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 16,
     fontWeight: '600',
     marginTop: 16,
   },
   emptyText: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 13,
     marginTop: 4,
     textAlign: 'center',
   },
   caseCard: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
     marginBottom: 12,
     overflow: 'hidden',
   },
@@ -422,7 +425,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   caseName: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 15,
     fontWeight: '600',
     marginBottom: 6,
@@ -433,7 +436,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   caseDate: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
   },
   caseActions: {
@@ -446,9 +449,9 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {
     borderTopWidth: 1,
-    borderTopColor: colors.cardBorder,
+    borderTopColor: theme.cardBorder,
     padding: 14,
-    backgroundColor: colors.inputBackground,
+    backgroundColor: theme.inputBackground,
   },
   detailRow: {
     flexDirection: 'row',
@@ -457,11 +460,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   detailLabel: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
   },
   detailValue: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 14,
     fontWeight: '600',
   },

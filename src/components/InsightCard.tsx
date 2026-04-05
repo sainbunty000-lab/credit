@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { ThemeColors } from '../theme/themes';
 
 type InsightType = 'strength' | 'risk' | 'recommendation' | 'info';
 
@@ -12,33 +13,14 @@ interface InsightCardProps {
   compact?: boolean;
 }
 
-const TYPE_CONFIG: Record<InsightType, { color: string; bg: string; border: string; icon: React.ComponentProps<typeof Ionicons>['name'] }> = {
-  strength: { color: colors.green, bg: `${colors.green}10`, border: `${colors.green}30`, icon: 'checkmark-circle-outline' },
-  risk: { color: colors.error, bg: `${colors.error}08`, border: `${colors.error}25`, icon: 'warning-outline' },
-  recommendation: { color: colors.primary, bg: colors.primaryLight, border: `${colors.primary}30`, icon: 'bulb-outline' },
-  info: { color: colors.cyan, bg: `${colors.cyan}10`, border: `${colors.cyan}25`, icon: 'information-circle-outline' },
-};
-
-export function InsightCard({ items, type = 'info', title, compact = false }: InsightCardProps) {
-  if (!items || items.length === 0) return null;
-  const cfg = TYPE_CONFIG[type];
-
-  return (
-    <View style={[styles.container, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
-      {title ? (
-        <View style={styles.titleRow}>
-          <Ionicons name={cfg.icon} size={15} color={cfg.color} />
-          <Text style={[styles.title, { color: cfg.color }]}>{title}</Text>
-        </View>
-      ) : null}
-      {items.map((item, i) => (
-        <View key={i} style={[styles.itemRow, compact && styles.itemRowCompact]}>
-          <View style={[styles.dot, { backgroundColor: cfg.color }]} />
-          <Text style={[styles.itemText, { color: colors.text }]}>{item}</Text>
-        </View>
-      ))}
-    </View>
-  );
+function getTypeConfig(type: InsightType, theme: ThemeColors) {
+  const configs: Record<InsightType, { color: string; bg: string; border: string; icon: React.ComponentProps<typeof Ionicons>['name'] }> = {
+    strength: { color: theme.green, bg: `${theme.green}10`, border: `${theme.green}30`, icon: 'checkmark-circle-outline' },
+    risk: { color: theme.error, bg: `${theme.error}08`, border: `${theme.error}25`, icon: 'warning-outline' },
+    recommendation: { color: theme.primary, bg: theme.primaryLight, border: `${theme.primary}30`, icon: 'bulb-outline' },
+    info: { color: theme.cyan, bg: `${theme.cyan}10`, border: `${theme.cyan}25`, icon: 'information-circle-outline' },
+  };
+  return configs[type];
 }
 
 const styles = StyleSheet.create({
@@ -80,3 +62,26 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
 });
+
+export function InsightCard({ items, type = 'info', title, compact = false }: InsightCardProps) {
+  const { theme } = useTheme();
+  if (!items || items.length === 0) return null;
+  const cfg = getTypeConfig(type, theme);
+
+  return (
+    <View style={[styles.container, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
+      {title ? (
+        <View style={styles.titleRow}>
+          <Ionicons name={cfg.icon} size={15} color={cfg.color} />
+          <Text style={[styles.title, { color: cfg.color }]}>{title}</Text>
+        </View>
+      ) : null}
+      {items.map((item, i) => (
+        <View key={i} style={[styles.itemRow, compact && styles.itemRowCompact]}>
+          <View style={[styles.dot, { backgroundColor: cfg.color }]} />
+          <Text style={[styles.itemText, { color: theme.text }]}>{item}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}

@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { ThemeColors } from '../theme/themes';
 
 interface AppHeaderProps {
   title: string;
@@ -11,7 +12,63 @@ interface AppHeaderProps {
   rightComponent?: React.ReactNode;
 }
 
+function makeStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 16,
+    },
+    left: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    logo: {
+      width: 40,
+      height: 40,
+      borderRadius: 8,
+      marginRight: 10,
+      borderWidth: 1,
+      borderColor: theme.cardBorder,
+    },
+    textBlock: {
+      flex: 1,
+    },
+    brand: {
+      color: theme.primary,
+      fontSize: 9,
+      fontWeight: '800',
+      letterSpacing: 1.5,
+      marginBottom: 1,
+    },
+    title: {
+      color: theme.text,
+      fontSize: 20,
+      fontWeight: '800',
+      lineHeight: 24,
+    },
+    subtitle: {
+      color: theme.subText,
+      fontSize: 12,
+      marginTop: 1,
+    },
+    right: {
+      marginLeft: 8,
+    },
+    iconButton: {
+      padding: 8,
+      backgroundColor: theme.primaryLight,
+      borderRadius: 20,
+      marginLeft: 8,
+    },
+  });
+}
+
 export function AppHeader({ title, subtitle, rightIcon, onRightPress, rightComponent }: AppHeaderProps) {
+  const { theme } = useTheme();
+  const styles = makeStyles(theme);
   return (
     <View style={styles.container}>
       <View style={styles.left}>
@@ -26,61 +83,9 @@ export function AppHeader({ title, subtitle, rightIcon, onRightPress, rightCompo
         <View style={styles.right}>{rightComponent}</View>
       ) : rightIcon ? (
         <TouchableOpacity style={styles.iconButton} onPress={onRightPress} activeOpacity={0.7}>
-          <Ionicons name={rightIcon} size={22} color={colors.primary} />
+          <Ionicons name={rightIcon} size={22} color={theme.primary} />
         </TouchableOpacity>
       ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  left: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  logo: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  textBlock: {
-    flex: 1,
-  },
-  brand: {
-    color: colors.primary,
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 1.5,
-    marginBottom: 1,
-  },
-  title: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '800',
-    lineHeight: 24,
-  },
-  subtitle: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 1,
-  },
-  right: {
-    marginLeft: 8,
-  },
-  iconButton: {
-    padding: 8,
-    backgroundColor: colors.primaryLight,
-    borderRadius: 20,
-    marginLeft: 8,
-  },
-});
