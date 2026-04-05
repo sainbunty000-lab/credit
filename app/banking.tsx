@@ -268,6 +268,9 @@ export default function BankingScreen() {
     'D': 'Poor — Not Recommended',
   };
 
+  const cashFlowData = result?.cash_flow_trend ?? [];
+  const risksData = result?.risks ?? [];
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAwareScrollView
@@ -466,7 +469,7 @@ export default function BankingScreen() {
             </View>
 
             {/* 3. Cash Flow Chart */}
-            {result.cash_flow_trend.length > 0 && (
+            {cashFlowData.length > 0 && (
               <>
                 <SectionHeader title="Cash Flow Trend" color={colors.cyan} />
                 <Card>
@@ -482,9 +485,9 @@ export default function BankingScreen() {
                   </View>
                   {(() => {
                     const maxVal = Math.max(
-                      ...result.cash_flow_trend.map(m => Math.max(m.inflow, m.outflow))
+                      ...cashFlowData.map(m => Math.max(m.inflow, m.outflow))
                     ) || 1;
-                    return result.cash_flow_trend.map((item, i) => (
+                    return cashFlowData.map((item, i) => (
                       <View key={i} style={styles.chartRow}>
                         <Text style={styles.chartMonth}>{item.month}</Text>
                         <View style={styles.chartBarsCol}>
@@ -525,11 +528,11 @@ export default function BankingScreen() {
             )}
 
             {/* 4. Risk Indicators */}
-            {result.risks.length > 0 && (
+            {risksData.length > 0 && (
               <>
                 <SectionHeader title="Risk Indicators" color={colors.red} />
                 <View style={styles.riskList}>
-                  {result.risks.map((risk, i) => (
+                  {risksData.map((risk, i) => (
                     <View key={i} style={styles.riskCard}>
                       <Ionicons name="warning" size={18} color={colors.red} />
                       <Text style={styles.riskText}>{risk}</Text>

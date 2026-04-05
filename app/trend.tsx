@@ -5,9 +5,10 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LineChart } from 'react-native-gifted-charts';
+import * as DocumentPicker from 'expo-document-picker';
 import { colors } from '../src/theme/colors';
 import { Card, SectionHeader, InputField, AppHeader, InsightCard, SummarySection } from '../src/components';
-import { analyzeMultiYear, saveCase, exportPDF } from '../src/api';
+import { analyzeMultiYear, saveCase, exportPDF, parseDocument, getMimeTypeFromExtension } from '../src/api';
 import { MultiYearResult, YearData } from '../src/types';
 import { useAppStore } from '../src/store';
 
@@ -24,6 +25,13 @@ interface YearInputs {
   purchases: string;
   opex: string;
   netProfit: string;
+}
+
+interface SelectedFile {
+  name: string;
+  uri: string;
+  type: string;
+  size?: number;
 }
 
 const defaultYear = (year: string): YearInputs => ({
@@ -75,6 +83,8 @@ export default function TrendScreen() {
   const [activeYear, setActiveYear] = useState(0);
   const [companyName, setCompanyName] = useState('Company');
   const [exporting, setExporting] = useState(false);
+  const [financialFile, setFinancialFile] = useState<SelectedFile | null>(null);
+  const [parsing, setParsing] = useState(false);
 
   const currentYear = new Date().getFullYear();
   const [yearsData, setYearsData] = useState<YearInputs[]>([
@@ -82,6 +92,117 @@ export default function TrendScreen() {
     defaultYear(`${currentYear - 1}`),
     defaultYear(`${currentYear}`),
   ]);
+
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const pickFinancialDocument = async () => {
+    try {
+      const picked = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+
+      if (!picked.canceled && picked.assets && picked.assets.length > 0) {
+        const file = picked.assets[0];
+        const fileName = file.name.toLowerCase();
+
+        const validExtensions = ['.pdf', '.xlsx', '.xls', '.csv', '.jpg', '.jpeg', '.png', '.heic', '.heif'];
+        const isValid = validExtensions.some(ext => fileName.endsWith(ext));
+
+        if (!isValid) {
+          Alert.alert('Invalid File', 'Please select a PDF, Excel, CSV, or Image file.');
+          return;
+        }
+
+        setFinancialFile({
+          name: file.name,
+          uri: file.uri,
+          type: getMimeTypeFromExtension(file.name),
+          size: file.size,
+        });
+      }
+    } catch (error) {
+      console.log('Error picking document:', error);
+      Alert.alert('Error', 'Failed to pick document. Please try again.');
+    }
+  };
+
+  const handleParseFinancialDocument = async () => {
+    if (!financialFile) {
+      Alert.alert('No File', 'Please select a financial document to parse.');
+      return;
+    }
+
+    setParsing(true);
+
+    try {
+      console.log('Sending financial document to backend:', financialFile.name);
+
+      const response = await parseDocument(
+        financialFile.uri,
+        financialFile.name,
+        financialFile.type,
+        'financial_statement'
+      );
+
+      console.log('Parse response:', response);
+
+      if (response.success && response.parsed_data) {
+        const data = response.parsed_data;
+        let hasData = false;
+
+        // Map parsed fields into the active year's inputs
+        const updated = [...yearsData];
+        const target = { ...updated[activeYear] };
+
+        if (data.revenue) { target.revenue = String(data.revenue); hasData = true; }
+        if (data.net_profit) { target.netProfit = String(data.net_profit); hasData = true; }
+        if (data.cogs) { target.cogs = String(data.cogs); hasData = true; }
+        if (data.purchases) { target.purchases = String(data.purchases); hasData = true; }
+        if (data.operating_expenses) { target.opex = String(data.operating_expenses); hasData = true; }
+        if (data.current_assets) { target.currentAssets = String(data.current_assets); hasData = true; }
+        if (data.current_liabilities) { target.currentLiabilities = String(data.current_liabilities); hasData = true; }
+        if (data.inventory) { target.inventory = String(data.inventory); hasData = true; }
+        if (data.debtors) { target.debtors = String(data.debtors); hasData = true; }
+        if (data.creditors) { target.creditors = String(data.creditors); hasData = true; }
+        if (data.cash_bank_balance) { target.cashBank = String(data.cash_bank_balance); hasData = true; }
+
+        updated[activeYear] = target;
+        setYearsData(updated);
+
+        if (hasData) {
+          Alert.alert(
+            'Parsing Complete',
+            `Financial document parsed using Gemini Vision AI!\n\nExtracted values filled into FY ${target.year}. Please verify and edit if needed.`
+          );
+        } else {
+          Alert.alert(
+            'Parsing Issue',
+            'Text was extracted but no financial values found.\n\nPlease enter values manually.'
+          );
+        }
+      } else {
+        Alert.alert(
+          'Parsing Issue',
+          response.message || 'Could not extract data from the document.\n\nPlease enter values manually.'
+        );
+      }
+    } catch (error: any) {
+      console.log('Parse error:', error);
+      Alert.alert(
+        'Parsing Error',
+        `Could not parse document: ${error?.message || 'Unknown error'}.\n\nPlease enter values manually.`
+      );
+    }
+
+    setParsing(false);
+  };
 
   const updateYearField = (yearIndex: number, field: keyof YearInputs, value: string) => {
     const newData = [...yearsData];
@@ -190,6 +311,63 @@ export default function TrendScreen() {
           title="Multi-Year Analysis"
           subtitle="Balance Sheet & P&L Trend Comparison"
         />
+
+        {/* Upload Financial Document */}
+        <Card>
+          <View style={styles.stepHeader}>
+            <View style={styles.stepNumber}>
+              <Text style={styles.stepNumberText}>1</Text>
+            </View>
+            <View>
+              <Text style={styles.stepTitle}>Upload Financial Document</Text>
+              <Text style={styles.stepSubtitle}>Select a Balance Sheet or P&L statement for autofill</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity style={styles.uploadButton} onPress={pickFinancialDocument}>
+            <Ionicons
+              name={financialFile ? 'checkmark-circle' : 'cloud-upload-outline'}
+              size={20}
+              color={financialFile ? colors.green : colors.primary}
+            />
+            <View style={styles.uploadTextContainer}>
+              <Text style={[styles.uploadButtonTextStyle, financialFile && styles.uploadButtonTextSelected]}>
+                {financialFile ? financialFile.name : 'Select Financial Statement (PDF / Excel / CSV)'}
+              </Text>
+              {financialFile && (
+                <Text style={styles.fileSize}>{formatFileSize(financialFile.size)}</Text>
+              )}
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          {financialFile && (
+            <TouchableOpacity
+              style={styles.parseButton}
+              onPress={handleParseFinancialDocument}
+              disabled={parsing}
+            >
+              <LinearGradient
+                colors={[colors.yellow, colors.orange]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.parseGradient}
+              >
+                {parsing ? (
+                  <>
+                    <ActivityIndicator color="#fff" size="small" />
+                    <Text style={styles.parseText}>Parsing Document...</Text>
+                  </>
+                ) : (
+                  <>
+                    <Ionicons name="scan-outline" size={20} color="#fff" />
+                    <Text style={styles.parseText}>Parse & Extract Data</Text>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+        </Card>
 
         {/* Year Tabs */}
         <View style={styles.yearTabs}>
@@ -551,6 +729,76 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 20,
+  },
+  stepHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
+  stepNumber: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.primary + '30',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepNumberText: {
+    color: colors.primary,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  stepTitle: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  stepSubtitle: {
+    color: colors.textMuted,
+    fontSize: 11,
+  },
+  uploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.inputBackground,
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 10,
+    gap: 10,
+  },
+  uploadTextContainer: {
+    flex: 1,
+  },
+  uploadButtonTextStyle: {
+    color: colors.textSecondary,
+    fontSize: 13,
+  },
+  uploadButtonTextSelected: {
+    color: colors.text,
+    fontWeight: '500',
+  },
+  fileSize: {
+    color: colors.textMuted,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  parseButton: {
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginTop: 6,
+  },
+  parseGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 10,
+  },
+  parseText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
   },
   yearTabs: {
     flexDirection: 'row',
