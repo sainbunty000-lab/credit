@@ -6,7 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LineChart } from 'react-native-gifted-charts';
 import * as DocumentPicker from 'expo-document-picker';
-import { colors } from '../src/theme/colors';
+import { useTheme } from '../src/theme/ThemeContext';
+import { ThemeColors } from '../src/theme/themes';
 import { Card, SectionHeader, InputField, AppHeader, InsightCard, SummarySection } from '../src/components';
 import { analyzeMultiYear, saveCase, exportPDF, parseDocument, getMimeTypeFromExtension } from '../src/api';
 import { MultiYearResult, YearData } from '../src/types';
@@ -61,21 +62,23 @@ const getTrendEmoji = (label?: string | null): string => {
   return '📊';
 };
 
-const getTrendBadgeColor = (label?: string | null): string => {
-  if (!label) return colors.textMuted;
-  if (label.includes('Strong') || label.includes('Consistent')) return colors.green;
-  if (label.includes('Volatile')) return colors.yellow;
-  if (label.includes('Declining')) return colors.red;
-  return colors.primary;
+const getTrendBadgeColor = (label: string | null | undefined, theme: ThemeColors): string => {
+  if (!label) return theme.textMuted;
+  if (label.includes('Strong') || label.includes('Consistent')) return theme.green;
+  if (label.includes('Volatile')) return theme.yellow;
+  if (label.includes('Declining')) return theme.red;
+  return theme.primary;
 };
 
-const getEligibilityColor = (status: string): string => {
-  if (status === 'Eligible') return colors.green;
-  if (status === 'Conditional') return colors.yellow;
-  return colors.red;
+const getEligibilityColor = (status: string, theme: ThemeColors): string => {
+  if (status === 'Eligible') return theme.green;
+  if (status === 'Conditional') return theme.yellow;
+  return theme.red;
 };
 
 export default function TrendScreen() {
+  const { theme } = useTheme();
+  const styles = makeStyles(theme);
   const { setTrendResult } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -332,7 +335,7 @@ export default function TrendScreen() {
         {/* Upload Financial Documents — compact single card */}
         <Card>
           <View style={styles.stepHeader}>
-            <Ionicons name="cloud-upload-outline" size={20} color={colors.primary} />
+            <Ionicons name="cloud-upload-outline" size={20} color={theme.primary} />
             <View>
               <Text style={styles.stepTitle}>Upload Financial Documents</Text>
               <Text style={styles.stepSubtitle}>Select P&L and Balance Sheet per year for autofill</Text>
@@ -363,7 +366,7 @@ export default function TrendScreen() {
                   <Ionicons
                     name={plFile ? 'checkmark-circle' : 'add-circle-outline'}
                     size={16}
-                    color={plFile ? colors.green : colors.primary}
+                    color={plFile ? theme.green : theme.primary}
                   />
                   <Text style={[styles.compactUploadText, plFile && styles.compactUploadTextSelected]} numberOfLines={1}>
                     {plFile ? plFile.name : 'Select P&L'}
@@ -375,7 +378,7 @@ export default function TrendScreen() {
                   <Ionicons
                     name={bsFile ? 'checkmark-circle' : 'add-circle-outline'}
                     size={16}
-                    color={bsFile ? colors.green : colors.primary}
+                    color={bsFile ? theme.green : theme.primary}
                   />
                   <Text style={[styles.compactUploadText, bsFile && styles.compactUploadTextSelected]} numberOfLines={1}>
                     {bsFile ? bsFile.name : 'Select BS'}
@@ -415,7 +418,7 @@ export default function TrendScreen() {
         </View>
 
         {/* Year Input Form */}
-        <SectionHeader title={`Balance Sheet - FY ${activeYearData.year}`} color={colors.yellow} />
+        <SectionHeader title={`Balance Sheet - FY ${activeYearData.year}`} color={theme.yellow} />
         <Card>
           <InputField
             label="Current Assets"
@@ -449,7 +452,7 @@ export default function TrendScreen() {
           />
         </Card>
 
-        <SectionHeader title={`Profit & Loss - FY ${activeYearData.year}`} color={colors.green} />
+        <SectionHeader title={`Profit & Loss - FY ${activeYearData.year}`} color={theme.green} />
         <Card>
           <InputField
             label="Revenue / Sales"
@@ -485,7 +488,7 @@ export default function TrendScreen() {
           disabled={loading}
         >
           <LinearGradient
-            colors={[colors.purple, colors.primary]}
+            colors={[theme.purple, theme.primary]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.analyzeGradient}
@@ -505,7 +508,7 @@ export default function TrendScreen() {
         {result && (
           <>
             {/* ── Growth Score ── */}
-            <SectionHeader title="Growth Overview" color={colors.purple} />
+            <SectionHeader title="Growth Overview" color={theme.purple} />
             <Card>
               <View style={styles.scoreRow}>
                 <View style={styles.scoreCircle}>
@@ -514,8 +517,8 @@ export default function TrendScreen() {
                 </View>
                 <View style={styles.scoreInfo}>
                   <Text style={styles.scoreTitle}>Growth Score</Text>
-                  <View style={[styles.trendBadge, { backgroundColor: getTrendBadgeColor(result.trend_label) + '25' }]}>
-                    <Text style={[styles.trendBadgeText, { color: getTrendBadgeColor(result.trend_label) }]}>
+                  <View style={[styles.trendBadge, { backgroundColor: getTrendBadgeColor(result.trend_label, theme) + '25' }]}>
+                    <Text style={[styles.trendBadgeText, { color: getTrendBadgeColor(result.trend_label, theme) }]}>
                       {getTrendEmoji(result.trend_label)}  {result.trend_label ?? 'Analyzing...'}
                     </Text>
                   </View>
@@ -525,7 +528,7 @@ export default function TrendScreen() {
             </Card>
 
             {/* ── Growth Indicators ── */}
-            <SectionHeader title="Growth Indicators" color={colors.cyan} />
+            <SectionHeader title="Growth Indicators" color={theme.cyan} />
             <View style={styles.growthRow}>
               {[
                 { label: 'Revenue', value: result.trend_analysis?.metrics.revenue_growth },
@@ -533,7 +536,7 @@ export default function TrendScreen() {
                 { label: 'Work. Capital', value: result.trend_analysis?.metrics.wc_growth },
               ].map(({ label, value }) => {
                 const isPos = value != null && value >= 0;
-                const color = value == null ? colors.textMuted : isPos ? colors.green : colors.red;
+                const color = value == null ? theme.textMuted : isPos ? theme.green : theme.red;
                 return (
                   <View key={label} style={styles.growthBox}>
                     <Text style={[styles.growthPct, { color }]}>
@@ -547,7 +550,7 @@ export default function TrendScreen() {
             </View>
 
             {/* ── Trend Charts ── */}
-            <SectionHeader title="Trend Charts" color={colors.green} />
+            <SectionHeader title="Trend Charts" color={theme.green} />
             <Card>
               <Text style={styles.chartTitle}>Revenue Trend</Text>
               <LineChart
@@ -557,17 +560,17 @@ export default function TrendScreen() {
                 }))}
                 width={CHART_WIDTH}
                 height={120}
-                color={colors.green}
+                color={theme.green}
                 thickness={2.5}
-                dataPointsColor={colors.primaryDark}
+                dataPointsColor={theme.primaryDark}
                 dataPointsRadius={4}
-                startFillColor={colors.primaryLight}
+                startFillColor={theme.primaryLight}
                 endFillColor="transparent"
                 areaChart
                 curved
-                rulesColor={colors.chartGrid}
+                rulesColor={theme.chartGrid}
                 rulesType="solid"
-                xAxisColor={colors.cardBorder}
+                xAxisColor={theme.cardBorder}
                 yAxisColor="transparent"
                 yAxisTextStyle={styles.chartLabel}
                 xAxisLabelTextStyle={styles.chartLabel}
@@ -586,17 +589,17 @@ export default function TrendScreen() {
                 }))}
                 width={CHART_WIDTH}
                 height={120}
-                color={colors.cyan}
+                color={theme.cyan}
                 thickness={2.5}
-                dataPointsColor={colors.cyan}
+                dataPointsColor={theme.cyan}
                 dataPointsRadius={4}
-                startFillColor={`${colors.info}20`}
+                startFillColor={`${theme.info}20`}
                 endFillColor="transparent"
                 areaChart
                 curved
-                rulesColor={colors.chartGrid}
+                rulesColor={theme.chartGrid}
                 rulesType="solid"
-                xAxisColor={colors.cardBorder}
+                xAxisColor={theme.cardBorder}
                 yAxisColor="transparent"
                 yAxisTextStyle={styles.chartLabel}
                 xAxisLabelTextStyle={styles.chartLabel}
@@ -615,17 +618,17 @@ export default function TrendScreen() {
                 }))}
                 width={CHART_WIDTH}
                 height={120}
-                color={colors.purple}
+                color={theme.purple}
                 thickness={2.5}
-                dataPointsColor={colors.purple}
+                dataPointsColor={theme.purple}
                 dataPointsRadius={4}
-                startFillColor={`${colors.purple}20`}
+                startFillColor={`${theme.purple}20`}
                 endFillColor="transparent"
                 areaChart
                 curved
-                rulesColor={colors.chartGrid}
+                rulesColor={theme.chartGrid}
                 rulesType="solid"
-                xAxisColor={colors.cardBorder}
+                xAxisColor={theme.cardBorder}
                 yAxisColor="transparent"
                 yAxisTextStyle={styles.chartLabel}
                 xAxisLabelTextStyle={styles.chartLabel}
@@ -636,18 +639,18 @@ export default function TrendScreen() {
             </Card>
 
             {/* ── AI Summary ── */}
-            <SectionHeader title="Financial Summary" color={colors.primary} />
+            <SectionHeader title="Financial Summary" color={theme.primary} />
             <SummarySection
               summary={result.trend_analysis?.analysis.summary ?? result.recommendation}
               eligibilityStatus={result.trend_analysis?.analysis.eligibility_status}
             />
 
             {/* ── Insights Cards ── */}
-            <SectionHeader title="Key Insights" color={colors.primary} />
+            <SectionHeader title="Key Insights" color={theme.primary} />
             <InsightCard items={result.insights} type="recommendation" />
 
             {/* ── Year Comparison Table ── */}
-            <SectionHeader title="Year Comparison" color={colors.yellow} />
+            <SectionHeader title="Year Comparison" color={theme.yellow} />
             <Card style={{ padding: 0, overflow: 'hidden' }}>
               <View style={styles.compTableHeader}>
                 <Text style={[styles.compCell, styles.compHeaderText]}>Year</Text>
@@ -674,11 +677,11 @@ export default function TrendScreen() {
             {/* Growth Patterns */}
             {result.patterns && Object.keys(result.patterns).length > 0 && (
               <>
-                <SectionHeader title="Growth Patterns" color={colors.cyan} />
+                <SectionHeader title="Growth Patterns" color={theme.cyan} />
                 <Card>
                   {Object.entries(result.patterns).map(([metric, pattern]) => {
                     const isPositive = pattern === 'growing' || pattern === 'stable';
-                    const patternColor = isPositive ? colors.green : pattern === 'volatile' ? colors.orange : colors.red;
+                    const patternColor = isPositive ? theme.green : pattern === 'volatile' ? theme.orange : theme.red;
                     return (
                       <View key={metric} style={styles.insightRow}>
                         <Ionicons
@@ -699,7 +702,7 @@ export default function TrendScreen() {
             {/* AI Analysis */}
             {result.ai_analysis && (
               <>
-                <SectionHeader title="AI Eligibility Assessment" color={colors.primary} />
+                <SectionHeader title="AI Eligibility Assessment" color={theme.primary} />
                 <SummarySection
                   summary={result.ai_analysis.summary}
                   eligibilityStatus={result.ai_analysis.eligibility_status}
@@ -719,20 +722,20 @@ export default function TrendScreen() {
         <View style={styles.actionRow}>
           <TouchableOpacity style={styles.actionButton} onPress={handleSaveCase} disabled={!result || saving}>
             {saving ? (
-              <ActivityIndicator size="small" color={colors.primary} />
+              <ActivityIndicator size="small" color={theme.primary} />
             ) : (
               <>
-                <Ionicons name="save-outline" size={18} color={colors.primary} />
+                <Ionicons name="save-outline" size={18} color={theme.primary} />
                 <Text style={styles.actionButtonText}>Save Case</Text>
               </>
             )}
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} onPress={handleExportPDF} disabled={!result || exporting}>
             {exporting ? (
-              <ActivityIndicator size="small" color={colors.primary} />
+              <ActivityIndicator size="small" color={theme.primary} />
             ) : (
               <>
-                <Ionicons name="download-outline" size={18} color={colors.primary} />
+                <Ionicons name="download-outline" size={18} color={theme.primary} />
                 <Text style={styles.actionButtonText}>Export PDF</Text>
               </>
             )}
@@ -740,7 +743,7 @@ export default function TrendScreen() {
         </View>
 
         <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-          <Ionicons name="refresh-outline" size={18} color={colors.textSecondary} />
+          <Ionicons name="refresh-outline" size={18} color={theme.subText} />
           <Text style={styles.resetButtonText}>Start New Analysis</Text>
         </TouchableOpacity>
       </KeyboardAwareScrollView>
@@ -748,10 +751,10 @@ export default function TrendScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   scrollContent: {
     padding: 20,
@@ -770,26 +773,26 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.primary + '30',
+    backgroundColor: theme.primary + '30',
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepNumberText: {
-    color: colors.primary,
+    color: theme.primary,
     fontWeight: '700',
     fontSize: 14,
   },
   stepTitle: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 14,
     fontWeight: '600',
   },
   stepSubtitle: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
   },
   uploadLabel: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 6,
@@ -797,7 +800,7 @@ const styles = StyleSheet.create({
   uploadButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.inputBackground,
+    backgroundColor: theme.inputBackground,
     borderRadius: 10,
     padding: 14,
     marginBottom: 10,
@@ -807,15 +810,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   uploadButtonTextStyle: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
   },
   uploadButtonTextSelected: {
-    color: colors.text,
+    color: theme.text,
     fontWeight: '500',
   },
   fileSize: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
     marginTop: 2,
   },
@@ -842,10 +845,10 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     paddingBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: colors.cardBorder,
+    borderBottomColor: theme.cardBorder,
   },
   uploadColLabel: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -858,17 +861,17 @@ const styles = StyleSheet.create({
   },
   uploadRowBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.cardBorder,
+    borderBottomColor: theme.cardBorder,
   },
   yearBadge: {
     flex: 1,
-    backgroundColor: colors.primary + '20',
+    backgroundColor: theme.primary + '20',
     borderRadius: 8,
     paddingVertical: 6,
     alignItems: 'center',
   },
   yearBadgeText: {
-    color: colors.primary,
+    color: theme.primary,
     fontSize: 11,
     fontWeight: '700',
     textAlign: 'center',
@@ -877,7 +880,7 @@ const styles = StyleSheet.create({
     flex: 2,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.inputBackground,
+    backgroundColor: theme.inputBackground,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 8,
@@ -885,23 +888,23 @@ const styles = StyleSheet.create({
   },
   compactUploadText: {
     flex: 1,
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 11,
   },
   compactUploadTextSelected: {
-    color: colors.text,
+    color: theme.text,
     fontWeight: '500',
   },
   compactParseBtn: {
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: colors.primary,
+    backgroundColor: theme.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   compactParseBtnDisabled: {
-    backgroundColor: colors.textMuted,
+    backgroundColor: theme.textMuted,
     opacity: 0.4,
   },
   yearTabs: {
@@ -911,24 +914,24 @@ const styles = StyleSheet.create({
   },
   yearTab: {
     flex: 1,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
     borderRadius: 8,
     padding: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
   },
   yearTabActive: {
-    backgroundColor: colors.primary + '30',
-    borderColor: colors.primary,
+    backgroundColor: theme.primary + '30',
+    borderColor: theme.primary,
   },
   yearTabText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
     fontWeight: '600',
   },
   yearTabTextActive: {
-    color: colors.primary,
+    color: theme.primary,
   },
   analyzeButton: {
     borderRadius: 10,
@@ -949,7 +952,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   trendTitle: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 12,
@@ -962,12 +965,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   trendYear: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
     marginBottom: 4,
   },
   trendValue: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -978,13 +981,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   insightText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
     flex: 1,
     lineHeight: 20,
   },
   recommendationText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
     lineHeight: 20,
   },
@@ -1007,7 +1010,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   confidenceText: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -1021,15 +1024,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
     borderRadius: 10,
     padding: 14,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
     gap: 8,
   },
   actionButtonText: {
-    color: colors.primary,
+    color: theme.primary,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -1037,16 +1040,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
     borderRadius: 10,
     padding: 14,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
     gap: 8,
     marginBottom: 20,
   },
   resetButtonText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 14,
   },
   // ── Growth Score ──────────────────────────────────────────────────────
@@ -1059,19 +1062,19 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     borderWidth: 3,
-    borderColor: colors.primary,
+    borderColor: theme.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   scoreNumber: {
-    color: colors.primary,
+    color: theme.primary,
     fontSize: 28,
     fontWeight: '800',
   },
   scoreSlash: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
   },
   scoreInfo: {
@@ -1079,7 +1082,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   scoreTitle: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -1094,7 +1097,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   scoreSubtext: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
   },
   // ── Growth Indicators ─────────────────────────────────────────────────
@@ -1105,12 +1108,12 @@ const styles = StyleSheet.create({
   },
   growthBox: {
     flex: 1,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
     borderRadius: 10,
     padding: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: theme.cardBorder,
   },
   growthPct: {
     fontSize: 18,
@@ -1118,7 +1121,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   growthBoxLabel: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1132,13 +1135,13 @@ const styles = StyleSheet.create({
   },
   // ── Charts ────────────────────────────────────────────────────────────
   chartTitle: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 13,
     fontWeight: '600',
     marginBottom: 10,
   },
   chartLabel: {
-    color: colors.textMuted,
+    color: theme.textMuted,
     fontSize: 9,
   },
   // ── AI Summary ────────────────────────────────────────────────────────
@@ -1150,7 +1153,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   eligibilityLabel: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -1164,7 +1167,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   summaryText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 13,
     lineHeight: 20,
   },
@@ -1176,7 +1179,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.cardBorder,
+    borderBottomColor: theme.cardBorder,
   },
   insightCardLast: {
     borderBottomWidth: 0,
@@ -1187,7 +1190,7 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 6,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -1195,22 +1198,22 @@ const styles = StyleSheet.create({
   // ── Year Comparison Table ─────────────────────────────────────────────
   compTableHeader: {
     flexDirection: 'row',
-    backgroundColor: colors.primaryLight,
+    backgroundColor: theme.primaryLight,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.cardBorder,
+    borderBottomColor: theme.cardBorder,
   },
   compRow: {
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 11,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderBottomColor: colors.cardBorder,
+    borderBottomColor: theme.cardBorder,
   },
   compRowAlt: {
-    backgroundColor: colors.tableRowAlt,
+    backgroundColor: theme.tableRowAlt,
   },
   compRowLast: {
     borderBottomWidth: 0,
@@ -1220,7 +1223,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   compHeaderText: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -1228,13 +1231,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   compYearText: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
   },
   compValueText: {
-    color: colors.textSecondary,
+    color: theme.subText,
     fontSize: 12,
     fontWeight: '500',
     textAlign: 'center',
@@ -1245,9 +1248,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   compProfitPos: {
-    color: colors.green,
+    color: theme.green,
   },
   compProfitNeg: {
-    color: colors.red,
+    color: theme.red,
   },
 });
