@@ -31,16 +31,26 @@ FIELD_SYNONYMS: Dict[str, list] = {
         "receivables", "debtors", "accounts_receivable",
         "trade_receivables", "sundry_debtors", "trade debtors",
         "debtors_receivables", "bills_receivable",
+        "sundry debtors", "trade receivables", "debtors / receivables",
+        "debtors receivables",
     ],
     "payables": [
         "payables", "creditors", "accounts_payable",
         "trade_payables", "sundry_creditors", "trade creditors",
         "bills_payable",
+        "sundry creditors", "trade payables", "creditors / payables",
+        "creditors payables",
     ],
     "cash": [
         "cash", "cash_bank_balance", "cash_and_bank",
         "cash_and_cash_equivalents", "cash & bank", "bank_balance",
         "bank balance", "cash and bank balances",
+        "cash & bank balance", "cash and bank", "cash & bank balances",
+    ],
+    "loans_advances": [
+        "loans_advances", "loans_and_advances", "loans & advances",
+        "advances", "short_term_loans", "loans and advances",
+        "other_current_assets", "other current assets",
     ],
     "fixed_assets": [
         "fixed_assets", "net_fixed_assets", "property_plant_equipment",
