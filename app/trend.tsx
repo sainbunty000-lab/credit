@@ -1157,7 +1157,7 @@ const makeStyles = (theme: ThemeColors) => StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  eligibilityBadge: {
+  eligibilityBadgePill: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,

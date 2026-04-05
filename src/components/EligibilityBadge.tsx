@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { ThemeColors } from '../theme/themes';
 
 type EligibilityStatus = 'Eligible' | 'Not Eligible' | 'Conditional' | 'ELIGIBLE' | 'NOT ELIGIBLE' | 'CONDITIONALLY ELIGIBLE' | string;
 
@@ -11,19 +12,20 @@ interface EligibilityBadgeProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-const getStatusConfig = (status: EligibilityStatus) => {
+function getStatusConfig(status: EligibilityStatus, theme: ThemeColors) {
   const s = status?.toUpperCase() ?? '';
   if (s.includes('NOT') || s.includes('INELIGIBLE')) {
-    return { color: colors.error, bg: `${colors.error}15`, icon: 'close-circle' as const, label: 'Not Eligible' };
+    return { color: theme.error, bg: `${theme.error}15`, icon: 'close-circle' as const, label: 'Not Eligible' };
   }
   if (s.includes('CONDITIONAL')) {
-    return { color: colors.yellow, bg: `${colors.yellow}15`, icon: 'alert-circle' as const, label: 'Conditional' };
+    return { color: theme.yellow, bg: `${theme.yellow}15`, icon: 'alert-circle' as const, label: 'Conditional' };
   }
-  return { color: colors.green, bg: `${colors.green}15`, icon: 'checkmark-circle' as const, label: 'Eligible' };
-};
+  return { color: theme.green, bg: `${theme.green}15`, icon: 'checkmark-circle' as const, label: 'Eligible' };
+}
 
 export function EligibilityBadge({ status, size = 'md' }: EligibilityBadgeProps) {
-  const { color, bg, icon, label } = getStatusConfig(status);
+  const { theme } = useTheme();
+  const { color, bg, icon, label } = getStatusConfig(status, theme);
   const scale = useSharedValue(0.8);
 
   useEffect(() => {

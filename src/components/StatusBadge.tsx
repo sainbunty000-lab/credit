@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
 
 interface StatusBadgeProps {
   status: string;
@@ -8,22 +8,24 @@ interface StatusBadgeProps {
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, variant = 'neutral' }) => {
-  const getColors = () => {
+  const { theme } = useTheme();
+
+  const getBadgeColors = () => {
     switch (variant) {
       case 'success':
-        return { bg: 'rgba(16, 185, 129, 0.2)', text: colors.green };
+        return { bg: 'rgba(16, 185, 129, 0.2)', text: theme.green };
       case 'warning':
-        return { bg: 'rgba(245, 158, 11, 0.2)', text: colors.yellow };
+        return { bg: 'rgba(245, 158, 11, 0.2)', text: theme.yellow };
       case 'error':
-        return { bg: 'rgba(239, 68, 68, 0.2)', text: colors.red };
+        return { bg: 'rgba(239, 68, 68, 0.2)', text: theme.red };
       case 'info':
-        return { bg: 'rgba(59, 130, 246, 0.2)', text: colors.primary };
+        return { bg: 'rgba(59, 130, 246, 0.2)', text: theme.primary };
       default:
-        return { bg: 'rgba(136, 136, 153, 0.2)', text: colors.textSecondary };
+        return { bg: 'rgba(136, 136, 153, 0.2)', text: theme.subText };
     }
   };
 
-  const badgeColors = getColors();
+  const badgeColors = getBadgeColors();
 
   return (
     <View style={[styles.badge, { backgroundColor: badgeColors.bg }]}>
