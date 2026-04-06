@@ -8,9 +8,10 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useTheme } from '../src/theme/ThemeContext';
 import { ThemeColors } from '../src/theme/themes';
 import { Card, SectionHeader, InputField, StatusBadge, AppHeader, InsightCard, SummarySection } from '../src/components';
-import { analyzeBanking, saveCase, parseDocument, exportPDF, getMimeTypeFromExtension } from '../src/api';
+import { analyzeBanking, saveCase, parseDocument, getMimeTypeFromExtension } from '../src/api';
 import { BankingResult } from '../src/types';
 import { useAppStore } from '../src/store';
+import { generatePDF } from '../utils/pdfGenerator';
 
 interface SelectedFile {
   name: string;
@@ -230,16 +231,8 @@ export default function BankingScreen() {
     if (!result) return;
     setExporting(true);
     try {
-      const blob = await exportPDF('banking', result, result.company_name);
-      if (typeof window !== 'undefined' && window.URL) {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${result.company_name}_Banking_Report.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      }
-      Alert.alert('Success', 'PDF report downloaded!');
+      await generatePDF(result);
+      Alert.alert('Success', 'PDF report exported successfully!');
     } catch (error) {
       console.log('PDF export error:', error);
       Alert.alert('Error', 'Failed to generate PDF report.');
