@@ -120,7 +120,7 @@ export function parseTransactions(rows: RawTransactionRow[]): Transaction[] {
 
     // Skip reversals entirely
     if (category === 'reversal') {
-      if (__DEV__) {
+      if (process.env.NODE_ENV !== 'production') {
         console.log('[bankParser] Skipping reversal:', narration);
       }
       continue;
@@ -128,7 +128,7 @@ export function parseTransactions(rows: RawTransactionRow[]): Transaction[] {
 
     // Skip IMPS fee spam (charges below ₹10)
     if (category === 'charges' && withdrawal < 10) {
-      if (__DEV__) {
+      if (process.env.NODE_ENV !== 'production') {
         console.log('[bankParser] Skipping tiny charge:', narration, withdrawal);
       }
       continue;
@@ -145,7 +145,7 @@ export function parseTransactions(rows: RawTransactionRow[]): Transaction[] {
     });
   }
 
-  if (__DEV__) {
+  if (process.env.NODE_ENV !== 'production') {
     console.log(`[bankParser] Parsed ${transactions.length} transactions from ${rows.length} rows`);
   }
 

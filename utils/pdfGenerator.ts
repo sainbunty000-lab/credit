@@ -177,8 +177,8 @@ async function generatePDFMobile(html: string, companyName: string): Promise<voi
   const Print   = await import('expo-print');
   const Sharing = await import('expo-sharing');
 
-  const { uri } = await Print.printToFileAsync({ html });
   const fileName = `${companyName.replace(/\s+/g, '_')}_Banking_Report.pdf`;
+  const { uri } = await Print.printToFileAsync({ html, base64: false });
 
   const isAvailable = await Sharing.isAvailableAsync();
   if (isAvailable) {
