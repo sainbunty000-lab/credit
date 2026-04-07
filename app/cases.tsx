@@ -13,7 +13,7 @@ import { useAppStore } from '../src/store';
 export default function CasesScreen() {
   const { theme } = useTheme();
   const styles = makeStyles(theme);
-  const { cases, setCases, removeCase, setLoadedCase, setWCResult, setBankingResult, setTrendResult, setGstItrResult } = useAppStore();
+  const { cases, setCases, removeCase, setLoadedCase, setWCResult, setTrendResult, setGstItrResult } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -74,9 +74,6 @@ export default function CasesScreen() {
     if (caseItem.analysis_type === 'working_capital') {
       setWCResult(caseItem.data);
       router.navigate('/wc');
-    } else if (caseItem.analysis_type === 'banking') {
-      setBankingResult(caseItem.data);
-      router.navigate('/banking');
     } else if (caseItem.analysis_type === 'multi_year') {
       setTrendResult(caseItem.data);
       router.navigate('/trend');
@@ -90,8 +87,6 @@ export default function CasesScreen() {
     switch (type) {
       case 'working_capital':
         return 'bar-chart-outline';
-      case 'banking':
-        return 'business-outline';
       case 'multi_year':
         return 'trending-up-outline';
       case 'gst_itr':
@@ -105,8 +100,6 @@ export default function CasesScreen() {
     switch (type) {
       case 'working_capital':
         return theme.yellow;
-      case 'banking':
-        return theme.green;
       case 'multi_year':
         return theme.purple;
       case 'gst_itr':
@@ -120,8 +113,6 @@ export default function CasesScreen() {
     switch (type) {
       case 'working_capital':
         return 'WC Analysis';
-      case 'banking':
-        return 'Banking';
       case 'multi_year':
         return 'Multi-Year';
       case 'gst_itr':
@@ -176,13 +167,6 @@ export default function CasesScreen() {
               {cases.filter((c) => c.analysis_type === 'working_capital').length}
             </Text>
             <Text style={styles.statLabel}>WC</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Ionicons name="business-outline" size={20} color={theme.green} />
-            <Text style={styles.statValue}>
-              {cases.filter((c) => c.analysis_type === 'banking').length}
-            </Text>
-            <Text style={styles.statLabel}>Banking</Text>
           </View>
           <View style={styles.statCard}>
             <Ionicons name="trending-up-outline" size={20} color={theme.purple} />

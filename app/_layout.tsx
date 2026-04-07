@@ -59,15 +59,6 @@ function AppShell() {
             }}
           />
           <Tabs.Screen
-            name="banking"
-            options={{
-              title: 'Banking',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="business-outline" size={size} color={color} />
-              ),
-            }}
-          />
-          <Tabs.Screen
             name="trend"
             options={{
               title: 'Trend',
@@ -84,6 +75,10 @@ function AppShell() {
                 <Ionicons name="shield-checkmark-outline" size={size} color={color} />
               ),
             }}
+          />
+          <Tabs.Screen
+            name="banking"
+            options={{ href: null }}
           />
           <Tabs.Screen
             name="cases"
