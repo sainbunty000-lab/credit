@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as DocumentPicker from 'expo-document-picker';
+import { useFocusEffect } from 'expo-router';
 import { useTheme } from '../src/theme/ThemeContext';
 import { ThemeColors } from '../src/theme/themes';
 import { Card, SectionHeader, InputField, MetricCard } from '../src/components';
@@ -22,7 +23,7 @@ interface SelectedFile {
 export default function WCScreen() {
   const { theme } = useTheme();
   const styles = makeStyles(theme);
-  const { setWCResult } = useAppStore();
+  const { setWCResult, loadedCase, setLoadedCase } = useAppStore();
   const [showInputs, setShowInputs] = useState(true);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -50,6 +51,37 @@ export default function WCScreen() {
   const [companyName, setCompanyName] = useState('Company');
   const [parsing, setParsing] = useState(false);
   const [exporting, setExporting] = useState(false);
+
+  // Pre-fill inputs and result when navigating from the Cases screen
+  useFocusEffect(
+    useCallback(() => {
+      if (loadedCase && loadedCase.analysis_type === 'working_capital') {
+        const savedResult: WorkingCapitalResult = loadedCase.data;
+        const bs = savedResult.input_data?.balance_sheet;
+        const pl = savedResult.input_data?.profit_loss;
+        if (bs) {
+          setCurrentAssets(bs.current_assets != null ? String(bs.current_assets) : '');
+          setCurrentLiabilities(bs.current_liabilities != null ? String(bs.current_liabilities) : '');
+          setInventory(bs.inventory != null ? String(bs.inventory) : '');
+          setDebtors(bs.debtors != null ? String(bs.debtors) : '');
+          setCreditors(bs.creditors != null ? String(bs.creditors) : '');
+          setCashBank(bs.cash_bank_balance != null ? String(bs.cash_bank_balance) : '');
+        }
+        if (pl) {
+          setRevenue(pl.revenue != null ? String(pl.revenue) : '');
+          setCogs(pl.cogs != null ? String(pl.cogs) : '');
+          setPurchases(pl.purchases != null ? String(pl.purchases) : '');
+          setOpex(pl.operating_expenses != null ? String(pl.operating_expenses) : '');
+          setNetProfit(pl.net_profit != null ? String(pl.net_profit) : '');
+        }
+        if (savedResult.company_name) setCompanyName(savedResult.company_name);
+        setResult(savedResult);
+        setWCResult(savedResult);
+        setShowInputs(true);
+        setLoadedCase(null);
+      }
+    }, [loadedCase])
+  );
 
   const pickBalanceSheet = async () => {
     try {

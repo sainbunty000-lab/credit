@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { router, useFocusEffect } from 'expo-router';
 import { useTheme } from '../src/theme/ThemeContext';
 import { ThemeColors } from '../src/theme/themes';
 import { Card, SectionHeader, StatusBadge } from '../src/components';
@@ -12,10 +13,9 @@ import { useAppStore } from '../src/store';
 export default function CasesScreen() {
   const { theme } = useTheme();
   const styles = makeStyles(theme);
-  const { cases, setCases, removeCase } = useAppStore();
+  const { cases, setCases, removeCase, setLoadedCase, setWCResult, setBankingResult, setTrendResult, setGstItrResult } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [expandedCase, setExpandedCase] = useState<string | null>(null);
 
   const fetchCases = async () => {
     try {
@@ -29,9 +29,11 @@ export default function CasesScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchCases();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchCases();
+    }, [])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -48,17 +50,40 @@ export default function CasesScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            // Remove from local state immediately for responsive UI
+            removeCase(caseId);
             try {
               await deleteCase(caseId);
-              removeCase(caseId);
-              Alert.alert('Success', 'Case deleted successfully');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete case');
+            } catch (error: any) {
+              // If the case was already deleted on the backend (404), that's fine.
+              // For other errors, restore is complex so we just log.
+              const status = error?.response?.status;
+              if (status !== 404) {
+                console.log('Delete case error:', error);
+              }
             }
           },
         },
       ]
     );
+  };
+
+  const handleOpenCase = (caseItem: Case) => {
+    setLoadedCase(caseItem);
+    // Pre-load the result into the appropriate store field
+    if (caseItem.analysis_type === 'working_capital') {
+      setWCResult(caseItem.data);
+      router.navigate('/wc');
+    } else if (caseItem.analysis_type === 'banking') {
+      setBankingResult(caseItem.data);
+      router.navigate('/banking');
+    } else if (caseItem.analysis_type === 'multi_year') {
+      setTrendResult(caseItem.data);
+      router.navigate('/trend');
+    } else if (caseItem.analysis_type === 'gst_itr') {
+      setGstItrResult(caseItem.data);
+      router.navigate('/gst');
+    }
   };
 
   const getTypeIcon = (type: string) => {
@@ -115,99 +140,6 @@ export default function CasesScreen() {
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
-
-  const renderCaseDetails = (caseItem: Case) => {
-    const data = caseItem.data;
-    
-    if (caseItem.analysis_type === 'working_capital') {
-      return (
-        <View style={styles.detailsContainer}>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Current Ratio</Text>
-            <Text style={styles.detailValue}>{data.current_ratio?.toFixed(2)}x</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Quick Ratio</Text>
-            <Text style={styles.detailValue}>{data.quick_ratio?.toFixed(2)}x</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Net Working Capital</Text>
-            <Text style={styles.detailValue}>₹{data.net_working_capital?.toLocaleString('en-IN')}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>WC Limit</Text>
-            <Text style={styles.detailValue}>₹{data.wc_limit?.toLocaleString('en-IN')}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Eligible</Text>
-            <StatusBadge status={data.eligible ? 'Yes' : 'No'} variant={data.eligible ? 'success' : 'error'} />
-          </View>
-        </View>
-      );
-    }
-
-    if (caseItem.analysis_type === 'banking') {
-      return (
-        <View style={styles.detailsContainer}>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Credit Score</Text>
-            <Text style={styles.detailValue}>{data.credit_score}/100</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Grade</Text>
-            <Text style={styles.detailValue}>{data.grade}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Risk Level</Text>
-            <StatusBadge
-              status={data.risk_level}
-              variant={data.risk_level === 'Low' ? 'success' : data.risk_level === 'Medium' ? 'warning' : 'error'}
-            />
-          </View>
-        </View>
-      );
-    }
-
-    if (caseItem.analysis_type === 'multi_year') {
-      return (
-        <View style={styles.detailsContainer}>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Years Analyzed</Text>
-            <Text style={styles.detailValue}>{data.years?.join(', ')}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Insights</Text>
-            <Text style={styles.detailValue}>{data.insights?.length || 0} findings</Text>
-          </View>
-        </View>
-      );
-    }
-
-    if (caseItem.analysis_type === 'gst_itr') {
-      return (
-        <View style={styles.detailsContainer}>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Compliance Score</Text>
-            <Text style={styles.detailValue}>{data.tax_compliance_score}/100</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>ITC Utilization</Text>
-            <Text style={styles.detailValue}>{data.itc_utilization_rate?.toFixed(1)}%</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Effective Tax Rate</Text>
-            <Text style={styles.detailValue}>{data.effective_tax_rate?.toFixed(1)}%</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Eligible</Text>
-            <StatusBadge status={data.eligible ? 'Yes' : 'No'} variant={data.eligible ? 'success' : 'error'} />
-          </View>
-        </View>
-      );
-    }
-
-    return null;
   };
 
   if (loading) {
@@ -282,7 +214,7 @@ export default function CasesScreen() {
               <TouchableOpacity
                 key={caseItem.id}
                 style={styles.caseCard}
-                onPress={() => setExpandedCase(expandedCase === caseItem.id ? null : caseItem.id)}
+                onPress={() => handleOpenCase(caseItem)}
                 activeOpacity={0.8}
               >
                 <View style={styles.caseHeader}>
@@ -301,17 +233,16 @@ export default function CasesScreen() {
                     </View>
                   </View>
                   <View style={styles.caseActions}>
-                    <TouchableOpacity onPress={() => handleDelete(caseItem.id)} style={styles.deleteButton}>
+                    <TouchableOpacity
+                      onPress={() => handleDelete(caseItem.id)}
+                      style={styles.deleteButton}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
                       <Ionicons name="trash-outline" size={18} color={theme.red} />
                     </TouchableOpacity>
-                    <Ionicons
-                      name={expandedCase === caseItem.id ? 'chevron-up' : 'chevron-down'}
-                      size={18}
-                      color={theme.textMuted}
-                    />
+                    <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
                   </View>
                 </View>
-                {expandedCase === caseItem.id && renderCaseDetails(caseItem)}
               </TouchableOpacity>
             ))}
           </>
@@ -446,26 +377,5 @@ const makeStyles = (theme: ThemeColors) => StyleSheet.create({
   },
   deleteButton: {
     padding: 4,
-  },
-  detailsContainer: {
-    borderTopWidth: 1,
-    borderTopColor: theme.cardBorder,
-    padding: 14,
-    backgroundColor: theme.inputBackground,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  detailLabel: {
-    color: theme.subText,
-    fontSize: 13,
-  },
-  detailValue: {
-    color: theme.text,
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

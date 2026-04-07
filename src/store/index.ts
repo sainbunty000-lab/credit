@@ -11,6 +11,9 @@ interface AppState {
   // Saved cases
   cases: Case[];
   
+  // Case loaded from saved cases for editing
+  loadedCase: Case | null;
+
   // Loading states
   isLoading: boolean;
   
@@ -22,6 +25,7 @@ interface AppState {
   setCases: (cases: Case[]) => void;
   addCase: (caseData: Case) => void;
   removeCase: (caseId: string) => void;
+  setLoadedCase: (c: Case | null) => void;
   setLoading: (loading: boolean) => void;
   clearResults: () => void;
 }
@@ -32,6 +36,7 @@ export const useAppStore = create<AppState>((set) => ({
   trendResult: null,
   gstItrResult: null,
   cases: [],
+  loadedCase: null,
   isLoading: false,
   
   setWCResult: (result) => set({ wcResult: result }),
@@ -41,6 +46,7 @@ export const useAppStore = create<AppState>((set) => ({
   setCases: (cases) => set({ cases }),
   addCase: (caseData) => set((state) => ({ cases: [caseData, ...state.cases] })),
   removeCase: (caseId) => set((state) => ({ cases: state.cases.filter(c => c.id !== caseId) })),
+  setLoadedCase: (c) => set({ loadedCase: c }),
   setLoading: (loading) => set({ isLoading: loading }),
   clearResults: () => set({ wcResult: null, bankingResult: null, trendResult: null, gstItrResult: null }),
 }));
