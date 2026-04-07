@@ -8,10 +8,15 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect } from 'expo-router';
 import { useTheme } from '../src/theme/ThemeContext';
 import { ThemeColors } from '../src/theme/themes';
-import { Card, SectionHeader, InputField, MetricCard } from '../src/components';
+import { Dimensions } from 'react-native';
+import { Card, SectionHeader, InputField, MetricCard, AnalyticsChart, InsightCard, SummarySection } from '../src/components';
+import { generateSummary } from '../utils/generateSummary';
 import { analyzeWorkingCapital, saveCase, parseDocument, exportPDF, getMimeTypeFromExtension } from '../src/api';
 import { WorkingCapitalResult } from '../src/types';
 import { useAppStore } from '../src/store';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const CHART_WIDTH = SCREEN_WIDTH - 72;
 
 interface SelectedFile {
   name: string;
@@ -708,6 +713,109 @@ export default function WCScreen() {
             <Text style={styles.recommendationText}>{result.recommendation}</Text>
           </Card>
         )}
+
+        {/* ── Charts ── */}
+        {result && (() => {
+          const rev = result.input_data?.profit_loss?.revenue ?? 0;
+          const exp = (result.input_data?.profit_loss?.cogs ?? 0) + (result.input_data?.profit_loss?.operating_expenses ?? 0);
+          const netProfit = result.input_data?.profit_loss?.net_profit ?? 0;
+          const ca = result.input_data?.balance_sheet?.current_assets ?? 0;
+          const cl = result.input_data?.balance_sheet?.current_liabilities ?? 0;
+          const inv = result.input_data?.balance_sheet?.inventory ?? 0;
+          const debtors = result.input_data?.balance_sheet?.debtors ?? 0;
+          const creditors = result.input_data?.balance_sheet?.creditors ?? 0;
+          const cash = result.input_data?.balance_sheet?.cash_bank_balance ?? 0;
+
+          // Show Expenses vs Net Profit as parts of Revenue (correct: Expenses + Net Profit = Revenue)
+          const pieData = [
+            { value: Math.max(exp, 0), color: theme.red, label: 'Expenses', text: `₹${(exp / 100000).toFixed(0)}L` },
+            { value: Math.max(netProfit, 0), color: theme.green, label: 'Net Profit', text: `₹${(netProfit / 100000).toFixed(0)}L` },
+          ].filter((d) => d.value > 0);
+
+          const barData = [
+            { value: ca / 100000, label: 'Curr Assets', frontColor: theme.green },
+            { value: cl / 100000, label: 'Curr Liab', frontColor: theme.red },
+            { value: inv / 100000, label: 'Inventory', frontColor: theme.yellow },
+            { value: debtors / 100000, label: 'Debtors', frontColor: theme.cyan },
+            { value: creditors / 100000, label: 'Creditors', frontColor: theme.orange },
+            { value: cash / 100000, label: 'Cash', frontColor: theme.primary },
+          ].filter((d) => d.value > 0);
+
+          return (
+            <>
+              <SectionHeader title="Financial Breakdown" color={theme.green} />
+
+              {pieData.length > 0 && (
+                <AnalyticsChart
+                  type="pie"
+                  data={pieData}
+                  title="Expenses vs Net Profit"
+                  subtitle="Revenue breakdown (Expenses + Net Profit = Revenue)"
+                  delay={100}
+                  legend={pieData.map((d) => ({ label: d.label, color: d.color, value: d.text }))}
+                />
+              )}
+
+              {barData.length > 0 && (
+                <AnalyticsChart
+                  type="bar"
+                  data={barData}
+                  title="Balance Sheet Overview"
+                  subtitle="Key balance sheet items (₹ Lakhs)"
+                  height={160}
+                  width={CHART_WIDTH}
+                  color={theme.primary}
+                  delay={200}
+                  formatYLabel={(v) => `₹${Number(v).toFixed(0)}L`}
+                />
+              )}
+            </>
+          );
+        })()}
+
+        {/* ── Business Summary ── */}
+        {result && (() => {
+          const rev = result.input_data?.profit_loss?.revenue ?? 0;
+          const exp = (result.input_data?.profit_loss?.cogs ?? 0) + (result.input_data?.profit_loss?.operating_expenses ?? 0);
+          const riskLevel = result.risk_indicators
+            ? (() => {
+                const scores = [result.risk_indicators.current_ratio.color, result.risk_indicators.wc_cycle.color, result.risk_indicators.nwc.color];
+                if (scores.filter((c) => c === 'red').length >= 2) return 'High' as const;
+                if (scores.some((c) => c === 'red') || scores.filter((c) => c === 'amber').length >= 2) return 'Medium' as const;
+                return 'Low' as const;
+              })()
+            : 'Medium' as const;
+
+          const summary = generateSummary({
+            revenue: rev,
+            expenses: exp,
+            netProfit: result.input_data?.profit_loss?.net_profit,
+            eligibility: result.wc_limit,
+            risk: riskLevel,
+            currentRatio: result.current_ratio,
+            grossMargin: result.gross_margin,
+            netMargin: result.net_margin,
+            type: 'wc',
+          });
+
+          return (
+            <>
+              <SectionHeader title="Business Summary" color={theme.primary} />
+              <SummarySection
+                title="Working Capital Analysis Summary"
+                summary={summary}
+                eligibilityStatus={result.eligible ? 'Eligible' : 'Not Eligible'}
+              />
+              {result.suggestions && result.suggestions.length > 0 && (
+                <InsightCard
+                  items={result.suggestions}
+                  type="recommendation"
+                  title="Key Recommendations"
+                />
+              )}
+            </>
+          );
+        })()}
 
         {/* Action Buttons */}
         <View style={styles.actionRow}>

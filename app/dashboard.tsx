@@ -24,7 +24,7 @@ import Animated, {
 import { LineChart, BarChart } from 'react-native-gifted-charts';
 import { useTheme } from '../src/theme/ThemeContext';
 import { ThemeColors } from '../src/theme/themes';
-import { Card, SectionHeader, KPIBox, ChartCard, DataTable, AppHeader, ThemeSwitcher } from '../src/components';
+import { Card, SectionHeader, KPIBox, ChartCard, DataTable, AppHeader, ThemeSwitcher, AnalyticsChart, InsightCard } from '../src/components';
 import { getDashboardStats } from '../src/api';
 import { DashboardStats } from '../src/types';
 import { useAppStore } from '../src/store';
@@ -458,6 +458,42 @@ export default function DashboardScreen() {
             <Text style={styles.analysisLabel}>Multi-Year</Text>
           </TouchableOpacity>
         </View>
+
+        {/* ── Analysis Distribution Pie Chart ── */}
+        {stats && (() => {
+          const wcCount = stats.wc_analysis_count ?? 0;
+          const multiCount = stats.multi_year_count ?? 0;
+          const gstCount = stats.gst_itr_count ?? 0;
+          const total = wcCount + multiCount + gstCount;
+          if (total === 0) return null;
+
+          const pieData = [
+            wcCount > 0 ? { value: wcCount, color: theme.yellow, label: 'WC', text: String(wcCount) } : null,
+            multiCount > 0 ? { value: multiCount, color: theme.cyan, label: 'Multi-Year', text: String(multiCount) } : null,
+            gstCount > 0 ? { value: gstCount, color: theme.purple, label: 'GST/ITR', text: String(gstCount) } : null,
+          ].filter(Boolean) as { value: number; color: string; label: string; text: string }[];
+
+          const insights = [
+            `Total analyses completed: ${total}`,
+            wcCount > 0 ? `Working Capital: ${wcCount} case${wcCount > 1 ? 's' : ''} (${((wcCount / total) * 100).toFixed(0)}% of portfolio)` : null,
+            multiCount > 0 ? `Multi-Year Trend: ${multiCount} case${multiCount > 1 ? 's' : ''} (${((multiCount / total) * 100).toFixed(0)}%)` : null,
+            gstCount > 0 ? `GST Surrogate: ${gstCount} case${gstCount > 1 ? 's' : ''} (${((gstCount / total) * 100).toFixed(0)}%)` : null,
+          ].filter(Boolean) as string[];
+
+          return (
+            <>
+              <AnalyticsChart
+                type="pie"
+                data={pieData}
+                title="Cases by Analysis Type"
+                subtitle={`${total} total analyses`}
+                delay={200}
+                legend={pieData.map((d) => ({ label: d.label, color: d.color, value: d.text }))}
+              />
+              <InsightCard items={insights} type="info" title="Portfolio Overview" />
+            </>
+          );
+        })()}
 
         {/* ── Quick Actions ── */}
         <SectionHeader title="Quick Actions" color={theme.cyan} />
