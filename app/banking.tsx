@@ -76,7 +76,7 @@ export default function BankingScreen() {
         setBankingResult(savedResult);
         setLoadedCase(null);
       }
-    }, [loadedCase])
+    }, [loadedCase, setBankingResult, setLoadedCase])
   );
 
   const pickBankStatement = async () => {

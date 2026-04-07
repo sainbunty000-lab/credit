@@ -17,7 +17,7 @@ export default function CasesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchCases = async () => {
+  const fetchCases = useCallback(async () => {
     try {
       const data = await getCases();
       setCases(data);
@@ -27,12 +27,12 @@ export default function CasesScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [setCases]);
 
   useFocusEffect(
     useCallback(() => {
       fetchCases();
-    }, [])
+    }, [fetchCases])
   );
 
   const onRefresh = () => {

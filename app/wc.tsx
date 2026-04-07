@@ -80,7 +80,7 @@ export default function WCScreen() {
         setShowInputs(true);
         setLoadedCase(null);
       }
-    }, [loadedCase])
+    }, [loadedCase, setWCResult, setLoadedCase])
   );
 
   const pickBalanceSheet = async () => {

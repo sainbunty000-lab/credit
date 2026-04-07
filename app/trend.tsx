@@ -133,7 +133,7 @@ export default function TrendScreen() {
         setTrendResult(savedResult);
         setLoadedCase(null);
       }
-    }, [loadedCase])
+    }, [loadedCase, setTrendResult, setLoadedCase])
   );
 
   const formatFileSize = (bytes?: number) => {

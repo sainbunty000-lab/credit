@@ -93,7 +93,7 @@ export default function GstScreen() {
         setGstItrResult(savedResult);
         setLoadedCase(null);
       }
-    }, [loadedCase])
+    }, [loadedCase, setGstItrResult, setLoadedCase])
   );
 
   const pickFile = async (type: 'gstr' | 'itr') => {
