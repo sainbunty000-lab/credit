@@ -669,7 +669,6 @@ export default function GstScreen() {
             {(() => {
               const annualTurnover = result.input_data.gst.total_taxable_turnover ?? 0;
               const totalGst = result.total_gst_collected ?? 0;
-              const grossMargin = annualTurnover > 0 ? ((annualTurnover - totalGst) / annualTurnover) * 100 : null;
               const riskLevel: 'Low' | 'Medium' | 'High' = result.tax_compliance_score >= 75 ? 'Low' : result.tax_compliance_score >= 50 ? 'Medium' : 'High';
 
               const eligibilityAmount = annualTurnover * 0.2;
@@ -679,7 +678,6 @@ export default function GstScreen() {
                 expenses: totalGst,
                 eligibility: eligibilityAmount,
                 risk: riskLevel,
-                grossMargin: grossMargin ?? undefined,
                 complianceScore: result.tax_compliance_score,
                 itcUtilization: result.itc_utilization_rate,
                 type: 'gst',

@@ -736,13 +736,18 @@ export default function TrendScreen() {
             {/* ── Enhanced Business Summary ── */}
             {(() => {
               const revenues = result.trends.revenue ?? [];
-              const maxRev = revenues.length > 0 ? Math.max(...revenues) : 0;
-              const latestRev = revenues.length > 0 ? revenues[revenues.length - 1] : 0;
+              const profits = result.trends.net_profit ?? [];
+              const latestIdx = revenues.length - 1;
+              const latestRev = latestIdx >= 0 ? revenues[latestIdx] : 0;
               const firstRev = revenues.length > 0 ? revenues[0] : 0;
+              const maxRev = revenues.length > 0 ? Math.max(...revenues) : 0;
+              // Use expenses from the same period as the latest revenue to keep metrics consistent
+              const latestProfit = latestIdx >= 0 && profits.length > latestIdx ? profits[latestIdx] : 0;
+              const latestExpenses = Math.max(0, latestRev - latestProfit);
               const growthRate = firstRev > 0 ? ((latestRev - firstRev) / firstRev) * 100 : 0;
               const cagr = result.growth_trends?.cagr?.revenue ?? undefined;
-              const latestProfit = result.trends.net_profit?.length > 0 ? result.trends.net_profit[result.trends.net_profit.length - 1] : 0;
               const netMargin = latestRev > 0 ? (latestProfit / latestRev) * 100 : 0;
+              // 25% of latest annual revenue is a standard WC surrogate eligibility estimate
               const eligibility = latestRev * 0.25;
 
               const riskLevel: 'Low' | 'Medium' | 'High' =
@@ -754,7 +759,7 @@ export default function TrendScreen() {
 
               const summary = generateSummary({
                 revenue: maxRev,
-                expenses: maxRev - latestProfit,
+                expenses: latestExpenses,
                 netProfit: latestProfit,
                 eligibility,
                 risk: riskLevel,

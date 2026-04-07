@@ -142,14 +142,16 @@ export const AnalyticsChart: React.FC<ChartProps> = ({
               radius={80}
               innerRadius={52}
               innerCircleColor={theme.card}
-              centerLabelComponent={() => (
-                <View style={styles.pieCenter}>
-                  <Text style={styles.pieCenterText}>
-                    {(safeData as PieSlice[]).length}
-                  </Text>
-                  <Text style={styles.pieCenterSub}>items</Text>
-                </View>
-              )}
+              centerLabelComponent={() => {
+                const total = (safeData as PieSlice[]).reduce((sum, d) => sum + d.value, 0);
+                const label = total >= 100000 ? `₹${(total / 100000).toFixed(0)}L` : total >= 1000 ? `₹${(total / 1000).toFixed(0)}K` : String(total);
+                return (
+                  <View style={styles.pieCenter}>
+                    <Text style={styles.pieCenterText}>{label}</Text>
+                    <Text style={styles.pieCenterSub}>total</Text>
+                  </View>
+                );
+              }}
               isAnimated
               animationDuration={600}
             />

@@ -726,10 +726,10 @@ export default function WCScreen() {
           const creditors = result.input_data?.balance_sheet?.creditors ?? 0;
           const cash = result.input_data?.balance_sheet?.cash_bank_balance ?? 0;
 
+          // Show Expenses vs Net Profit as parts of Revenue (correct: Expenses + Net Profit = Revenue)
           const pieData = [
-            { value: Math.max(rev, 0), color: theme.green, label: 'Revenue', text: `₹${(rev / 100000).toFixed(0)}L` },
             { value: Math.max(exp, 0), color: theme.red, label: 'Expenses', text: `₹${(exp / 100000).toFixed(0)}L` },
-            { value: Math.max(netProfit, 0), color: theme.cyan, label: 'Net Profit', text: `₹${(netProfit / 100000).toFixed(0)}L` },
+            { value: Math.max(netProfit, 0), color: theme.green, label: 'Net Profit', text: `₹${(netProfit / 100000).toFixed(0)}L` },
           ].filter((d) => d.value > 0);
 
           const barData = [
@@ -749,8 +749,8 @@ export default function WCScreen() {
                 <AnalyticsChart
                   type="pie"
                   data={pieData}
-                  title="Revenue vs Expenses"
-                  subtitle="P&L composition"
+                  title="Expenses vs Net Profit"
+                  subtitle="Revenue breakdown (Expenses + Net Profit = Revenue)"
                   delay={100}
                   legend={pieData.map((d) => ({ label: d.label, color: d.color, value: d.text }))}
                 />
