@@ -447,17 +447,6 @@ export default function DashboardScreen() {
             <Text style={styles.analysisLabel}>WC Analyses</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.analysisCard, { borderColor: `${theme.primary}30` }]}
-            onPress={() => router.push('/banking')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.analysisIcon, { backgroundColor: `${theme.primary}20` }]}>
-              <Ionicons name="business-outline" size={20} color={theme.primary} />
-            </View>
-            <Text style={styles.analysisValue}>{stats?.banking_count ?? 0}</Text>
-            <Text style={styles.analysisLabel}>Banking</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
             style={[styles.analysisCard, { borderColor: `${theme.cyan}30` }]}
             onPress={() => router.push('/trend')}
             activeOpacity={0.8}
@@ -476,15 +465,6 @@ export default function DashboardScreen() {
           <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/wc')} activeOpacity={0.8}>
             <Ionicons name="bar-chart-outline" size={18} color={theme.yellow} />
             <Text style={styles.quickActionText}>WC Analysis</Text>
-            <Ionicons name="chevron-forward" size={14} color={theme.textMuted} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.quickAction, { borderColor: `${theme.primary}40` }]}
-            onPress={() => router.push('/banking')}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="business-outline" size={18} color={theme.primary} />
-            <Text style={styles.quickActionText}>Banking</Text>
             <Ionicons name="chevron-forward" size={14} color={theme.textMuted} />
           </TouchableOpacity>
           <TouchableOpacity

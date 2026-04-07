@@ -34,15 +34,6 @@ const moduleDefinitions = [
     description: 'WC analysis & ratios',
   },
   {
-    id: 'banking',
-    title: 'Banking Performance',
-    subtitle: 'CORE MODULE',
-    icon: 'business-outline' as const,
-    colorKey: 'green' as const,
-    route: '/banking',
-    description: 'Credit & liquidity scores',
-  },
-  {
     id: 'trend',
     title: 'Multi-Year Analysis',
     subtitle: 'ADVANCED',
