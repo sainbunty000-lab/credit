@@ -114,6 +114,53 @@ FIELD_SYNONYMS: Dict[str, list] = {
         "purchases", "cost_of_purchases", "raw_material_consumed",
         "material cost",
     ],
+    # ── Banking Statement ─────────────────────────────────────────────
+    "total_credits": [
+        "total_credits", "credits", "credit_amount", "total_credit",
+        "total_inflow", "inflow", "total_deposits",
+    ],
+    "total_debits": [
+        "total_debits", "debits", "debit_amount", "total_debit",
+        "total_outflow", "outflow", "total_withdrawals",
+    ],
+    "average_balance": [
+        "average_balance", "avg_balance", "average_monthly_balance",
+        "ambam", "monthly_average_balance",
+    ],
+    "minimum_balance": [
+        "minimum_balance", "min_balance", "minimum_monthly_balance",
+        "min_monthly_balance",
+    ],
+    "opening_balance": [
+        "opening_balance", "ob", "opening", "beginning_balance",
+    ],
+    "closing_balance": [
+        "closing_balance", "cb", "closing", "ending_balance",
+    ],
+    "cash_deposits": [
+        "cash_deposits", "cash_deposit", "cash_deposited",
+        "currency_deposits",
+    ],
+    "cheque_bounces": [
+        "cheque_bounces", "bounces", "bounce_count",
+        "dishonoured_cheques", "returned_cheques",
+    ],
+    "loan_repayments": [
+        "loan_repayments", "loan_repayment", "emi_repayments",
+        "loan_emi", "loan_payments",
+    ],
+    "overdraft_usage": [
+        "overdraft_usage", "od_usage", "overdraft_utilized",
+        "od_utilized",
+    ],
+    "ecs_emi_payments": [
+        "ecs_emi_payments", "ecs_emi", "emi_payments",
+        "ecs_payments", "nach_payments",
+    ],
+    "num_transactions": [
+        "num_transactions", "number_of_transactions",
+        "transaction_count", "total_transactions",
+    ],
     # ── GST / GSTR-3B ────────────────────────────────────────────────
     "total_taxable_turnover": [
         "total_taxable_turnover", "taxable_turnover", "gst_turnover",

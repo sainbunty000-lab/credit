@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LineChart } from 'react-native-gifted-charts';
 import * as DocumentPicker from 'expo-document-picker';
+import { useFocusEffect } from 'expo-router';
 import { useTheme } from '../src/theme/ThemeContext';
 import { ThemeColors } from '../src/theme/themes';
 import { Card, SectionHeader, InputField, AppHeader, InsightCard, SummarySection } from '../src/components';
@@ -79,7 +80,7 @@ const getEligibilityColor = (status: string, theme: ThemeColors): string => {
 export default function TrendScreen() {
   const { theme } = useTheme();
   const styles = makeStyles(theme);
-  const { setTrendResult } = useAppStore();
+  const { setTrendResult, loadedCase, setLoadedCase } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<MultiYearResult | null>(null);
@@ -99,6 +100,41 @@ export default function TrendScreen() {
     defaultYear(`${currentYear - 1}`),
     defaultYear(`${currentYear}`),
   ]);
+
+  // Pre-fill year inputs and result when navigating from the Cases screen
+  useFocusEffect(
+    useCallback(() => {
+      if (loadedCase && loadedCase.analysis_type === 'multi_year') {
+        const savedResult: MultiYearResult = loadedCase.data;
+        const yearsInput = savedResult.input_data?.years_data;
+        if (yearsInput && yearsInput.length > 0) {
+          const filled: YearInputs[] = yearsInput.map((yd: any) => ({
+            year: yd.year ?? '',
+            currentAssets: yd.balance_sheet?.current_assets != null ? String(yd.balance_sheet.current_assets) : '',
+            currentLiabilities: yd.balance_sheet?.current_liabilities != null ? String(yd.balance_sheet.current_liabilities) : '',
+            inventory: yd.balance_sheet?.inventory != null ? String(yd.balance_sheet.inventory) : '',
+            debtors: yd.balance_sheet?.debtors != null ? String(yd.balance_sheet.debtors) : '',
+            creditors: yd.balance_sheet?.creditors != null ? String(yd.balance_sheet.creditors) : '',
+            cashBank: yd.balance_sheet?.cash_bank_balance != null ? String(yd.balance_sheet.cash_bank_balance) : '',
+            revenue: yd.profit_loss?.revenue != null ? String(yd.profit_loss.revenue) : '',
+            cogs: yd.profit_loss?.cogs != null ? String(yd.profit_loss.cogs) : '',
+            purchases: yd.profit_loss?.purchases != null ? String(yd.profit_loss.purchases) : '',
+            opex: yd.profit_loss?.operating_expenses != null ? String(yd.profit_loss.operating_expenses) : '',
+            netProfit: yd.profit_loss?.net_profit != null ? String(yd.profit_loss.net_profit) : '',
+          }));
+          // Pad to at least 3 years
+          while (filled.length < 3) filled.push(defaultYear(''));
+          setYearsData(filled);
+          // Resize yearFiles to match
+          setYearFiles(filled.map(() => ({ plFile: null, bsFile: null })));
+        }
+        if (savedResult.company_name) setCompanyName(savedResult.company_name);
+        setResult(savedResult);
+        setTrendResult(savedResult);
+        setLoadedCase(null);
+      }
+    }, [loadedCase, setTrendResult, setLoadedCase])
+  );
 
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return '';

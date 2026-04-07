@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as DocumentPicker from 'expo-document-picker';
+import { useFocusEffect } from 'expo-router';
 import { useTheme } from '../src/theme/ThemeContext';
 import { ThemeColors } from '../src/theme/themes';
 import { Card, SectionHeader, InputField, StatusBadge, AppHeader, InsightCard, SummarySection } from '../src/components';
@@ -23,7 +24,7 @@ interface SelectedFile {
 export default function BankingScreen() {
   const { theme } = useTheme();
   const styles = makeStyles(theme);
-  const { setBankingResult } = useAppStore();
+  const { setBankingResult, loadedCase, setLoadedCase } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<BankingResult | null>(null);
@@ -49,6 +50,34 @@ export default function BankingScreen() {
 
   const [companyName, setCompanyName] = useState('Company');
   const [exporting, setExporting] = useState(false);
+
+  // Pre-fill inputs and result when navigating from the Cases screen
+  useFocusEffect(
+    useCallback(() => {
+      if (loadedCase && loadedCase.analysis_type === 'banking') {
+        const savedResult: BankingResult = loadedCase.data;
+        const inp = savedResult.input_data;
+        if (inp) {
+          if (inp.total_credits != null) setTotalCredits(String(inp.total_credits));
+          if (inp.total_debits != null) setTotalDebits(String(inp.total_debits));
+          if (inp.average_balance != null) setAvgBalance(String(inp.average_balance));
+          if (inp.minimum_balance != null) setMinBalance(String(inp.minimum_balance));
+          if (inp.opening_balance != null) setOpeningBalance(String(inp.opening_balance));
+          if (inp.closing_balance != null) setClosingBalance(String(inp.closing_balance));
+          if (inp.cash_deposits != null) setCashDeposits(String(inp.cash_deposits));
+          if (inp.cheque_bounces != null) setChequeBounces(String(inp.cheque_bounces));
+          if (inp.loan_repayments != null) setLoanRepayments(String(inp.loan_repayments));
+          if (inp.overdraft_usage != null) setOverdraftUsage(String(inp.overdraft_usage));
+          if (inp.ecs_emi_payments != null) setEcsEmi(String(inp.ecs_emi_payments));
+          if (inp.num_transactions != null) setNumTransactions(String(inp.num_transactions));
+        }
+        if (savedResult.company_name) setCompanyName(savedResult.company_name);
+        setResult(savedResult);
+        setBankingResult(savedResult);
+        setLoadedCase(null);
+      }
+    }, [loadedCase, setBankingResult, setLoadedCase])
+  );
 
   const pickBankStatement = async () => {
     try {
@@ -106,22 +135,42 @@ export default function BankingScreen() {
       
       console.log('Parse response:', response);
       
-      if (response.success && response.parsed_data) {
-        const data = response.parsed_data;
+      if (response.success) {
+        // Prefer parsed_data (AI output has exact banking field names);
+        // fall back to normalized_data only when parsed_data has no values.
+        const raw = response.parsed_data || {};
+        const norm = response.normalized_data || {};
+        const data: Record<string, any> = Object.keys(raw).length > 0 ? raw : norm;
         let hasData = false;
-        
-        if (data.total_credits) { setTotalCredits(String(data.total_credits)); hasData = true; }
-        if (data.total_debits) { setTotalDebits(String(data.total_debits)); hasData = true; }
-        if (data.average_balance) { setAvgBalance(String(data.average_balance)); hasData = true; }
-        if (data.minimum_balance) { setMinBalance(String(data.minimum_balance)); hasData = true; }
-        if (data.opening_balance) { setOpeningBalance(String(data.opening_balance)); hasData = true; }
-        if (data.closing_balance) { setClosingBalance(String(data.closing_balance)); hasData = true; }
-        if (data.cash_deposits) { setCashDeposits(String(data.cash_deposits)); hasData = true; }
-        if (data.cheque_bounces !== undefined) { setChequeBounces(String(data.cheque_bounces)); hasData = true; }
-        if (data.loan_repayments) { setLoanRepayments(String(data.loan_repayments)); hasData = true; }
-        if (data.overdraft_usage) { setOverdraftUsage(String(data.overdraft_usage)); hasData = true; }
-        if (data.ecs_emi_payments) { setEcsEmi(String(data.ecs_emi_payments)); hasData = true; }
-        if (data.num_transactions) { setNumTransactions(String(data.num_transactions)); hasData = true; }
+
+        const pick = (...keys: string[]): number | undefined => {
+          for (const k of keys) {
+            if (data[k] != null) return Number(data[k]);
+          }
+          return undefined;
+        };
+
+        const set = (setter: (v: string) => void, ...keys: string[]) => {
+          const val = pick(...keys);
+          if (val != null) { setter(String(val)); hasData = true; }
+        };
+
+        set(setTotalCredits, 'total_credits', 'credits', 'credit_amount', 'total_credit');
+        set(setTotalDebits, 'total_debits', 'debits', 'debit_amount', 'total_debit');
+        set(setAvgBalance, 'average_balance', 'avg_balance', 'average_monthly_balance', 'ambam');
+        set(setMinBalance, 'minimum_balance', 'min_balance', 'minimum_monthly_balance');
+        set(setOpeningBalance, 'opening_balance', 'ob', 'opening');
+        set(setClosingBalance, 'closing_balance', 'cb', 'closing');
+        set(setCashDeposits, 'cash_deposits', 'cash_deposit', 'cash_deposited');
+        // cheque_bounces: 0 is a valid meaningful value — always check != null
+        {
+          const val = pick('cheque_bounces', 'bounces', 'bounce_count', 'dishonoured_cheques');
+          if (val != null) { setChequeBounces(String(val)); hasData = true; }
+        }
+        set(setLoanRepayments, 'loan_repayments', 'loan_repayment', 'emi_repayments', 'loan_emi');
+        set(setOverdraftUsage, 'overdraft_usage', 'od_usage', 'overdraft_utilized');
+        set(setEcsEmi, 'ecs_emi_payments', 'ecs_emi', 'emi_payments', 'ecs_payments');
+        set(setNumTransactions, 'num_transactions', 'number_of_transactions', 'transaction_count', 'total_transactions');
         
         if (hasData) {
           Alert.alert(

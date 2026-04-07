@@ -1122,6 +1122,11 @@ Return ONLY a valid JSON object with these exact keys (use 0 if value not found)
 Return only the JSON object, no explanations or markdown."""
     elif document_type == "bank_statement":
         return """Analyze this Bank Statement document and extract the following financial values.
+Look for total/aggregate credits (all money coming in), total/aggregate debits (all money going out),
+average monthly balance, minimum balance recorded, opening balance and closing balance for the period,
+cash/currency deposits (excluding cheque/NEFT/RTGS), number of cheque bounces or dishonoured cheques,
+total loan or EMI repayment amounts, overdraft or OD utilization amount, ECS/NACH/EMI auto-debit total,
+and total number of transactions.
 Return ONLY a valid JSON object with these exact keys (use 0 if value not found):
 {
     "total_credits": <number>,
@@ -1131,11 +1136,11 @@ Return ONLY a valid JSON object with these exact keys (use 0 if value not found)
     "opening_balance": <number>,
     "closing_balance": <number>,
     "cash_deposits": <number>,
-    "cheque_bounces": <number>,
+    "cheque_bounces": <integer>,
     "loan_repayments": <number>,
     "overdraft_usage": <number>,
     "ecs_emi_payments": <number>,
-    "num_transactions": <number>
+    "num_transactions": <integer>
 }
 Return only the JSON object, no explanations or markdown."""
     elif document_type == "gstr":

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   Alert, ActivityIndicator, Platform,
@@ -8,6 +8,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as DocumentPicker from 'expo-document-picker';
+import { useFocusEffect } from 'expo-router';
 import { useTheme } from '../src/theme/ThemeContext';
 import { ThemeColors } from '../src/theme/themes';
 import { Card, SectionHeader, InputField, StatusBadge, InsightCard, SummarySection } from '../src/components';
@@ -31,7 +32,7 @@ interface SelectedFile {
 export default function GstScreen() {
   const { theme } = useTheme();
   const styles = makeStyles(theme);
-  const { setGstItrResult } = useAppStore();
+  const { setGstItrResult, loadedCase, setLoadedCase } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<GstItrResult | null>(null);
@@ -61,6 +62,39 @@ export default function GstScreen() {
   const [companyName, setCompanyName] = useState('Company');
 
   const validExtensions = ['.pdf', '.xlsx', '.xls', '.csv', '.jpg', '.jpeg', '.png', '.heic', '.heif'];
+
+  // Pre-fill inputs and result when navigating from the Cases screen
+  useFocusEffect(
+    useCallback(() => {
+      if (loadedCase && loadedCase.analysis_type === 'gst_itr') {
+        const savedResult: GstItrResult = loadedCase.data;
+        const gst = savedResult.input_data?.gst;
+        const itr = savedResult.input_data?.itr;
+        if (gst) {
+          if (gst.gstin != null) setGstin(String(gst.gstin));
+          if (gst.total_taxable_turnover != null) setTotalTaxableTurnover(String(gst.total_taxable_turnover));
+          if (gst.igst_collected != null) setIgstCollected(String(gst.igst_collected));
+          if (gst.cgst_collected != null) setCgstCollected(String(gst.cgst_collected));
+          if (gst.sgst_collected != null) setSgstCollected(String(gst.sgst_collected));
+          if (gst.total_itc_available != null) setTotalItcAvailable(String(gst.total_itc_available));
+          if (gst.total_itc_utilized != null) setTotalItcUtilized(String(gst.total_itc_utilized));
+          if (gst.interest_paid != null) setInterestPaid(String(gst.interest_paid));
+        }
+        if (itr) {
+          if (itr.taxable_income != null) setTaxableIncome(String(itr.taxable_income));
+          if (itr.total_deductions != null) setTotalDeductions(String(itr.total_deductions));
+          if (itr.net_tax_liability != null) setNetTaxLiability(String(itr.net_tax_liability));
+          if (itr.tax_due != null) setTaxDue(String(itr.tax_due));
+          if (itr.tds_deducted != null) setTdsDeducted(String(itr.tds_deducted));
+          if (itr.advance_tax_paid != null) setAdvanceTaxPaid(String(itr.advance_tax_paid));
+        }
+        if (savedResult.company_name) setCompanyName(savedResult.company_name);
+        setResult(savedResult);
+        setGstItrResult(savedResult);
+        setLoadedCase(null);
+      }
+    }, [loadedCase, setGstItrResult, setLoadedCase])
+  );
 
   const pickFile = async (type: 'gstr' | 'itr') => {
     try {
