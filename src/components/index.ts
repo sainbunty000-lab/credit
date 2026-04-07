@@ -13,3 +13,5 @@ export { EligibilityBadge } from './EligibilityBadge';
 export { InsightCard } from './InsightCard';
 export { SummarySection } from './SummarySection';
 export { ThemeSwitcher } from './ThemeSwitcher';
+export { AnalyticsChart } from './charts/AnalyticsChart';
+export type { ChartProps, PieSlice, DataPoint } from './charts/AnalyticsChart';

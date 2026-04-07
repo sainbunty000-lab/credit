@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Alert, ActivityIndicator, Platform,
+  Alert, ActivityIndicator, Platform, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -11,7 +11,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect } from 'expo-router';
 import { useTheme } from '../src/theme/ThemeContext';
 import { ThemeColors } from '../src/theme/themes';
-import { Card, SectionHeader, InputField, StatusBadge, InsightCard, SummarySection } from '../src/components';
+import { Card, SectionHeader, InputField, StatusBadge, InsightCard, SummarySection, AnalyticsChart } from '../src/components';
 import {
   analyzeGstItr,
   saveCase,
@@ -21,6 +21,10 @@ import {
 } from '../src/api';
 import { GstItrResult } from '../src/types';
 import { useAppStore } from '../src/store';
+import { generateSummary } from '../utils/generateSummary';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const CHART_WIDTH = SCREEN_WIDTH - 72;
 
 interface SelectedFile {
   name: string;
@@ -608,6 +612,91 @@ export default function GstScreen() {
               summary={result.recommendation}
               eligibilityStatus={result.eligible ? 'Eligible' : 'Not Eligible'}
             />
+
+            {/* ── Charts ── */}
+            {(() => {
+              const annualTurnover = result.input_data.gst.total_taxable_turnover ?? 0;
+              const totalGst = result.total_gst_collected ?? 0;
+              const itcAvailable = result.input_data.gst.total_itc_available ?? 0;
+              const itcUtilized = result.input_data.gst.total_itc_utilized ?? 0;
+              const itcUnused = Math.max(0, itcAvailable - itcUtilized);
+
+              const barData = [
+                { value: annualTurnover / 100000, label: 'Turnover', frontColor: theme.purple },
+                { value: totalGst / 100000, label: 'GST Coll.', frontColor: theme.cyan },
+                { value: (result.input_data.itr.taxable_income ?? 0) / 100000, label: 'Tax. Income', frontColor: theme.green },
+                { value: (result.input_data.itr.net_tax_liability ?? 0) / 100000, label: 'Tax Liab.', frontColor: theme.yellow },
+              ].filter((d) => d.value > 0);
+
+              const pieData = [
+                itcUtilized > 0 ? { value: itcUtilized, color: theme.green, label: 'ITC Used', text: `₹${(itcUtilized / 100000).toFixed(0)}L` } : null,
+                itcUnused > 0 ? { value: itcUnused, color: theme.orange, label: 'ITC Unused', text: `₹${(itcUnused / 100000).toFixed(0)}L` } : null,
+              ].filter(Boolean) as { value: number; color: string; label: string; text: string }[];
+
+              return (
+                <>
+                  <SectionHeader title="GST Financial Breakdown" color={theme.purple} />
+
+                  {barData.length > 0 && (
+                    <AnalyticsChart
+                      type="bar"
+                      data={barData}
+                      title="Turnover & Tax Overview"
+                      subtitle="Key GST and ITR figures (₹ Lakhs)"
+                      height={160}
+                      width={CHART_WIDTH}
+                      color={theme.purple}
+                      delay={100}
+                      formatYLabel={(v) => `₹${Number(v).toFixed(0)}L`}
+                    />
+                  )}
+
+                  {pieData.length > 0 && (
+                    <AnalyticsChart
+                      type="pie"
+                      data={pieData}
+                      title="ITC Utilization"
+                      subtitle="Input Tax Credit usage breakdown"
+                      delay={200}
+                      legend={pieData.map((d) => ({ label: d.label, color: d.color, value: d.text }))}
+                    />
+                  )}
+                </>
+              );
+            })()}
+
+            {/* ── Business Summary ── */}
+            {(() => {
+              const annualTurnover = result.input_data.gst.total_taxable_turnover ?? 0;
+              const totalGst = result.total_gst_collected ?? 0;
+              const grossMargin = annualTurnover > 0 ? ((annualTurnover - totalGst) / annualTurnover) * 100 : null;
+              const riskLevel: 'Low' | 'Medium' | 'High' = result.tax_compliance_score >= 75 ? 'Low' : result.tax_compliance_score >= 50 ? 'Medium' : 'High';
+
+              const eligibilityAmount = annualTurnover * 0.2;
+
+              const summary = generateSummary({
+                revenue: annualTurnover,
+                expenses: totalGst,
+                eligibility: eligibilityAmount,
+                risk: riskLevel,
+                grossMargin: grossMargin ?? undefined,
+                complianceScore: result.tax_compliance_score,
+                itcUtilization: result.itc_utilization_rate,
+                type: 'gst',
+              });
+
+              return (
+                <>
+                  <SectionHeader title="Business Summary" color={theme.purple} />
+                  <SummarySection
+                    title="GST Surrogate Analysis Summary"
+                    summary={summary}
+                    eligibilityStatus={result.eligible ? 'Eligible' : 'Not Eligible'}
+                    confidence={result.tax_compliance_score / 100}
+                  />
+                </>
+              );
+            })()}
 
             {/* Action buttons */}
             <View style={styles.actionRow}>

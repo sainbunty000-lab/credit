@@ -9,10 +9,11 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect } from 'expo-router';
 import { useTheme } from '../src/theme/ThemeContext';
 import { ThemeColors } from '../src/theme/themes';
-import { Card, SectionHeader, InputField, AppHeader, InsightCard, SummarySection } from '../src/components';
+import { Card, SectionHeader, InputField, AppHeader, InsightCard, SummarySection, AnalyticsChart } from '../src/components';
 import { analyzeMultiYear, saveCase, exportPDF, parseDocument, getMimeTypeFromExtension } from '../src/api';
 import { MultiYearResult, YearData } from '../src/types';
 import { useAppStore } from '../src/store';
+import { generateSummary } from '../utils/generateSummary';
 
 interface YearInputs {
   year: string;
@@ -684,6 +685,107 @@ export default function TrendScreen() {
             {/* ── Insights Cards ── */}
             <SectionHeader title="Key Insights" color={theme.primary} />
             <InsightCard items={result.insights} type="recommendation" />
+
+            {/* ── Year-wise Revenue Bar Chart ── */}
+            {result.years.length > 0 && (() => {
+              const barData = result.years.map((yr, i) => ({
+                value: result.trends.revenue[i] / 100000,
+                label: `FY${String(yr).slice(-2)}`,
+                frontColor: theme.green,
+              }));
+              const profitData = result.years.map((yr, i) => ({
+                value: result.trends.net_profit[i] / 100000,
+                label: `FY${String(yr).slice(-2)}`,
+                frontColor: result.trends.net_profit[i] >= 0 ? theme.cyan : theme.red,
+              }));
+
+              const cagr = result.growth_trends?.cagr?.revenue;
+              const cagrPct = cagr != null ? `${cagr >= 0 ? '+' : ''}${cagr.toFixed(1)}%` : null;
+
+              return (
+                <>
+                  <SectionHeader title="Year-wise Charts" color={theme.green} />
+
+                  <AnalyticsChart
+                    type="bar"
+                    data={barData}
+                    title="Year-wise Revenue"
+                    subtitle={cagrPct ? `CAGR: ${cagrPct} · Values in ₹ Lakhs` : 'Revenue by year (₹ Lakhs)'}
+                    height={160}
+                    width={CHART_WIDTH}
+                    color={theme.green}
+                    delay={100}
+                    formatYLabel={(v) => `₹${Number(v).toFixed(0)}L`}
+                  />
+
+                  <AnalyticsChart
+                    type="bar"
+                    data={profitData}
+                    title="Year-wise Net Profit"
+                    subtitle="Profit / Loss trend (₹ Lakhs)"
+                    height={140}
+                    width={CHART_WIDTH}
+                    color={theme.cyan}
+                    delay={200}
+                    formatYLabel={(v) => `₹${Number(v).toFixed(0)}L`}
+                  />
+                </>
+              );
+            })()}
+
+            {/* ── Enhanced Business Summary ── */}
+            {(() => {
+              const revenues = result.trends.revenue ?? [];
+              const maxRev = revenues.length > 0 ? Math.max(...revenues) : 0;
+              const latestRev = revenues.length > 0 ? revenues[revenues.length - 1] : 0;
+              const firstRev = revenues.length > 0 ? revenues[0] : 0;
+              const growthRate = firstRev > 0 ? ((latestRev - firstRev) / firstRev) * 100 : 0;
+              const cagr = result.growth_trends?.cagr?.revenue ?? undefined;
+              const latestProfit = result.trends.net_profit?.length > 0 ? result.trends.net_profit[result.trends.net_profit.length - 1] : 0;
+              const netMargin = latestRev > 0 ? (latestProfit / latestRev) * 100 : 0;
+              const eligibility = latestRev * 0.25;
+
+              const riskLevel: 'Low' | 'Medium' | 'High' =
+                result.trend_label === 'Strong Growth' || result.trend_label === 'Growing'
+                  ? 'Low'
+                  : result.trend_label === 'Stable' || result.trend_label === 'Moderate Growth'
+                  ? 'Medium'
+                  : 'High';
+
+              const summary = generateSummary({
+                revenue: maxRev,
+                expenses: maxRev - latestProfit,
+                netProfit: latestProfit,
+                eligibility,
+                risk: riskLevel,
+                netMargin,
+                growthRate,
+                cagr,
+                years: result.years.length,
+                type: 'trend',
+              });
+
+              return (
+                <>
+                  <SectionHeader title="Business Growth Summary" color={theme.primary} />
+                  <SummarySection
+                    title="Multi-Year Trend Analysis Summary"
+                    summary={summary}
+                    eligibilityStatus={
+                      result.trend_analysis?.analysis.eligibility_status ??
+                      (growthRate >= 0 ? 'Eligible' : 'Review Required')
+                    }
+                  />
+                  {result.ai_analysis?.recommendations && result.ai_analysis.recommendations.length > 0 && (
+                    <InsightCard
+                      items={result.ai_analysis.recommendations}
+                      type="recommendation"
+                      title="Growth Recommendations"
+                    />
+                  )}
+                </>
+              );
+            })()}
 
             {/* ── Year Comparison Table ── */}
             <SectionHeader title="Year Comparison" color={theme.yellow} />
