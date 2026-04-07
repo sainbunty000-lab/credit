@@ -20,6 +20,7 @@
 
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.sainbunty000.capitalanalytics",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Select financial documents for analysis"
       }
@@ -45,6 +46,12 @@
 
     "experiments": {
       "typedRoutes": true
+    },
+
+    "extra": {
+      "eas": {
+        "projectId": "07a9c7c6-7012-4194-86d6-8f7d443da2ff"
+      }
     }
   }
 }
